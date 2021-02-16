@@ -1,0 +1,6 @@
+/home/lordy/Code/Godot Projects/NetworkedFPS/.mono/temp/bin/Tools/server.dll
+/home/lordy/Code/Godot Projects/NetworkedFPS/.mono/temp/bin/Tools/server.pdb
+/home/lordy/Code/Godot Projects/NetworkedFPS/.mono/temp/obj/Tools/server.csprojAssemblyReference.cache
+/home/lordy/Code/Godot Projects/NetworkedFPS/.mono/temp/obj/Tools/server.csproj.CoreCompileInputs.cache
+/home/lordy/Code/Godot Projects/NetworkedFPS/.mono/temp/obj/Tools/server.dll
+/home/lordy/Code/Godot Projects/NetworkedFPS/.mono/temp/obj/Tools/server.pdb
