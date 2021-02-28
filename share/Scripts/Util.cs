@@ -20,4 +20,10 @@ public class Util
     {
         return "res://Mods/" + Main.GameDir + "/" + resourceName;
     }
+
+    static public string GetLuaScriptString(string scriptName)
+    {
+        string loc = AppDomain.CurrentDomain.BaseDirectory + "/Mods/" + Main.GameDir + "/Scripts/" + scriptName;
+        return loc;
+    }
 }

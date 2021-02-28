@@ -1,12 +1,14 @@
 using Godot;
 using System;
 using System.Reflection;
-
-// eventually replace with bytecode
+using MoonSharp.Interpreter;
 
 public class ScriptManager : Node
 {
-    // Called when the node enters the scene tree for the first time.
+    MoonSharp.Interpreter.Script script = new MoonSharp.Interpreter.Script();
+    DynValue luaFactFunction;
+    DynValue luaClientConnected;
+    
     public override void _Ready()
     {
         LoadScripts();
@@ -14,13 +16,39 @@ public class ScriptManager : Node
 
     private void LoadScripts()
     {
-        // load client script
+        string sources = Util.GetLuaScriptString("sources.txt");
+        string[] sourceLines = System.IO.File.ReadAllLines(sources);
+        // load server scripts
+        script.Options.ScriptLoader = new MoonSharp.Interpreter.Loaders.FileSystemScriptLoader();
+        ((MoonSharp.Interpreter.Loaders.ScriptLoaderBase)script.Options.ScriptLoader).IgnoreLuaPathGlobal = true;
+        script.Options.UseLuaErrorLocations = true;
+        script.Options.DebugPrint = s => { GD.Print("{0}", s); };
+
+        foreach (string line in sourceLines)
+        {
+            script.DoFile(Util.GetLuaScriptString(line), null, line);
+        }
+        
+        luaFactFunction = script.Globals.Get("fact");
+        luaClientConnected = script.Globals.Get("clientconnected");
+
+        // c# functions
+        script.Globals["Print"] = (Action<string>)Print;
+
+        // c# types to pass
+        // FIXME - [MoonSharpVisible(false)] types
+        UserData.RegisterType<Player>();
+    }
+
+    private void Print(string s)
+    {
+        GD.Print(s);
     }
 
     // Player
     public void ClientConnected(Client c)
     {
-
+        script.Call(luaClientConnected, c.Player);
     }
 
     public void ClientDisconnected(Client c)
@@ -111,3 +139,4 @@ public class ScriptManager : Node
     }
 
 }
+

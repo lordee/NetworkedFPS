@@ -246,7 +246,7 @@ public class World : Node
         if (fields != null)
         {
             Entity ent = new Entity();
-            ent.name = item.Name;
+            ent.Name = item.Name;
             PropertyInfo[] entFields = typeof(Entity).GetProperties();
             foreach (PropertyInfo pi in entFields)
             {

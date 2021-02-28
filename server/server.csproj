@@ -1,4 +1,4 @@
-﻿<Project Sdk="Godot.NET.Sdk/3.2.4">
+<Project Sdk="Godot.NET.Sdk/3.2.4">
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Tools</Configuration>
     <ProjectGuid>{9C6BF6E9-00BD-4CD7-A893-B44C08ACEDF5}</ProjectGuid>
@@ -7,29 +7,30 @@
     <AssemblyName>server</AssemblyName>
     <GodotProjectGeneratorVersion>1.0.7333.4679</GodotProjectGeneratorVersion>
     <TargetFramework>net472</TargetFramework>
-    <!--The following properties were overridden during migration to prevent errors.
-    Enabling them may require other manual changes to the project and its files.-->
     <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
     <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
     <Deterministic>false</Deterministic>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="System" />
+    <Reference Include="System"/>
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="share\Scripts\Body.cs" />
-    <Compile Include="Scripts\Main.cs" />
-    <Compile Include="Scripts\Network.cs" />
-    <Compile Include="share\Scripts\Client.cs" />
-    <Compile Include="share\Scripts\Player.cs" />
-    <Compile Include="Scripts\ScriptManager.cs" />
-    <Compile Include="share\Scripts\World.cs" />
-    <Compile Include="share\Scripts\Enums.cs" />
-    <Compile Include="share\Scripts\Entity.cs" />
-    <Compile Include="share\Scripts\Snapshot.cs" />
-    <Compile Include="share\Scripts\PlayerCmd.cs" />
-    <Compile Include="share\Scripts\State.cs" />
-    <Compile Include="share\Scripts\Util.cs" />
+    <Compile Include="Properties\AssemblyInfo.cs"/>
+    <Compile Include="share\Scripts\Body.cs"/>
+    <Compile Include="Scripts\Main.cs"/>
+    <Compile Include="Scripts\Network.cs"/>
+    <Compile Include="share\Scripts\Client.cs"/>
+    <Compile Include="share\Scripts\Player.cs"/>
+    <Compile Include="Scripts\ScriptManager.cs"/>
+    <Compile Include="share\Scripts\World.cs"/>
+    <Compile Include="share\Scripts\Enums.cs"/>
+    <Compile Include="share\Scripts\Entity.cs"/>
+    <Compile Include="share\Scripts\Snapshot.cs"/>
+    <Compile Include="share\Scripts\PlayerCmd.cs"/>
+    <Compile Include="share\Scripts\State.cs"/>
+    <Compile Include="share\Scripts\Util.cs"/>
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="MoonSharp" Version="2.0.0"/>
   </ItemGroup>
 </Project>

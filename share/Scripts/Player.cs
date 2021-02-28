@@ -54,6 +54,7 @@ public class Player : Entity
         ClientOwner = client;
         NetworkID = ClientOwner.NetworkID;
         Name = ClientOwner.NetworkID.ToString();
+        NetName = NetworkID.ToString(); // FIXME - first piece of info for new clients
 
         Body = GetNodeOrNull("Body") as Body;
         Body.Init(this);
