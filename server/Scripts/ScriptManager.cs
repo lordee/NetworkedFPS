@@ -8,6 +8,7 @@ public class ScriptManager : Node
     MoonSharp.Interpreter.Script script = new MoonSharp.Interpreter.Script();
     DynValue luaFactFunction;
     DynValue luaClientConnected;
+    DynValue luaClientDisconnected;
     
     public override void _Ready()
     {
@@ -31,18 +32,15 @@ public class ScriptManager : Node
         
         luaFactFunction = script.Globals.Get("fact");
         luaClientConnected = script.Globals.Get("clientconnected");
+        luaClientDisconnected = script.Globals.Get("clientdisconnected");
 
         // c# functions
-        script.Globals["Print"] = (Action<string>)Print;
+        script.Globals["Print"] = (Action<string[]>)Builtins.Print;
+        script.Globals["BPrint"] = (Action<string[]>)Builtins.BPrint;
 
         // c# types to pass
         // FIXME - [MoonSharpVisible(false)] types
         UserData.RegisterType<Player>();
-    }
-
-    private void Print(string s)
-    {
-        GD.Print(s);
     }
 
     // Player
@@ -53,7 +51,7 @@ public class ScriptManager : Node
 
     public void ClientDisconnected(Client c)
     {
-        
+        script.Call(luaClientDisconnected, c.Player);
     }
 
     public void PlayerPreFrame(Player p)

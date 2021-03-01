@@ -19,6 +19,13 @@ public class PACKET
     public const string END = @"\e";
 }
 
+public enum BUILTIN
+{
+    NONE,
+    PRINT,
+    PRINT_HIGH,
+}
+
 public enum PACKETSTATE
 {
     UNINITIALISED,

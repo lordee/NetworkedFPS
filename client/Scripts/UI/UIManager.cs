@@ -81,14 +81,27 @@ public class UIManager : Node
 
     public static void UI_ConsoleToggle()
     {
-        IUIItem i = Stack.Peek();
-        if (i.GetType() == typeof(Console))
+        if (Stack.Count > 0)
         {
-            UIManager.Close();
+            IUIItem i = Stack.Peek();
+            if (i.GetType() == typeof(Console))
+            {
+                UIManager.Close();
+            }
+            else
+            {
+                Open(Console);
+            }
         }
         else
         {
             Open(Console);
         }
     }
+
+    static public void LoadHUD(Player p)
+	{
+		HUD.Init(p);
+		HUD.Visible = true;
+	}
 }

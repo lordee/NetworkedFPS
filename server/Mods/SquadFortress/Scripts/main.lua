@@ -8,5 +8,9 @@
 end
 
 function clientconnected (player)
-    Print(player.NetName .. " has joined the game");
+    BPrint(player.NetName, " has joined the game");
+end
+
+function clientdisconnected (player)
+    BPrint(player.NetName, " has left the game");
 end

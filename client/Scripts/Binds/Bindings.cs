@@ -389,7 +389,7 @@ public class Bindings : Node
 			{
 				UIManager.UI_Cancel();
 			}
-			else if (Input.IsActionJustPressed("ui_toggleconsole"))
+			else if (Input.IsActionJustPressed("console_toggle"))
 			{
 				UIManager.UI_ConsoleToggle();
 			}

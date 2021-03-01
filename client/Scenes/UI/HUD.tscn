@@ -61,8 +61,19 @@ scale = Vector2( 0.1, 0.1 )
 texture = ExtResource( 2 )
 
 [node name="FPS" type="Label" parent="Manager"]
+margin_left = 984.0
+margin_top = 2.0
+margin_right = 1024.0
+margin_bottom = 16.0
+text = "FPS"
+__meta__ = {
+"_edit_use_anchors_": false
+}
+
+[node name="PrintHigh" type="Label" parent="Manager"]
 margin_right = 40.0
 margin_bottom = 14.0
+text = "PrintHigh"
 __meta__ = {
 "_edit_use_anchors_": false
 }

@@ -33,6 +33,17 @@ public class Network : Node
         string packetString = BuildPacketString();
         byte[] packetBytes = Encoding.UTF8.GetBytes(packetString);
         RpcUnreliable(nameof(ReceivePacket), packetBytes);
+
+        foreach (Client c in Clients)
+        {
+            if (c.ReliablePackets.Count > 0)
+            {
+                string reliablePacketString = BuildReliablePacketString(c.ReliablePackets);
+                byte[] reliablePacketBytes = Encoding.UTF8.GetBytes(reliablePacketString);
+                RpcId(c.NetworkID, nameof(ReceiveReliablePacket), reliablePacketBytes);
+                c.ReliablePackets.Clear();
+            }
+        }
     }
 
     public void ClientConnected(string id)
@@ -71,7 +82,30 @@ public class Network : Node
     public void ConnectionRemoved()
     {
         GD.Print("ConnectionRemoved");
-        //_game.Quit();
+    }
+
+    private string BuildReliablePacketString(List<ReliablePacket> packets)
+    {
+        sb.Clear();
+        sb.Append(Main.World.ServerSnapshot);
+        sb.Append(",");
+        sb.Append(PACKET.HEADER);
+        sb.Append(",");
+        foreach (ReliablePacket packet in packets)
+        {
+            packet.SnapNumSent = Main.World.ServerSnapshot;
+
+            sb.Append((int)packet.Type);
+            sb.Append(",");
+            sb.Append(packet.Value);
+            sb.Append(",");
+        }
+        if (sb.Length > 0)
+        {
+            sb.Append(PACKET.END);
+        }
+
+        return sb.ToString();
     }
 
     private string BuildPacketString()
@@ -232,8 +266,11 @@ public class Network : Node
     }
 
     // stubs
-
     public void ReceivePacket(byte[] packet)
+    {
+        // stub for clients
+    }
+    public void ReceiveReliablePacket(byte[] packet)
     {
         // stub for clients
     }
@@ -252,4 +289,6 @@ public class Network : Node
     {
         // STUB for client
     }
+
+    
 }

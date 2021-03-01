@@ -19,6 +19,7 @@
     <Compile Include="share\Scripts\Body.cs"/>
     <Compile Include="Scripts\Main.cs"/>
     <Compile Include="Scripts\Network.cs"/>
+    <Compile Include="Scripts\Lua\Builtins.cs"/>
     <Compile Include="share\Scripts\Client.cs"/>
     <Compile Include="share\Scripts\Player.cs"/>
     <Compile Include="Scripts\ScriptManager.cs"/>
@@ -29,6 +30,7 @@
     <Compile Include="share\Scripts\PlayerCmd.cs"/>
     <Compile Include="share\Scripts\State.cs"/>
     <Compile Include="share\Scripts\Util.cs"/>
+    <Compile Include="share\Scripts\ReliablePacket.cs"/>
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="MoonSharp" Version="2.0.0"/>

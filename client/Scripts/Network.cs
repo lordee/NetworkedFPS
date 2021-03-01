@@ -69,6 +69,7 @@ public class Network : Node
             Main.Client = c;
             PlayerController pc = PlayerController.Instance();
             pc.Attach(p);
+            UIManager.LoadHUD(p);
         }
     }
 
@@ -83,6 +84,55 @@ public class Network : Node
         }
         Player p = Main.Client.Player;
         pc.Attach(p);
+    }
+
+    [Slave]
+    public void ReceiveReliablePacket(byte[] packet)
+    {
+        string pkStr = Encoding.UTF8.GetString(packet);
+        string[] split = pkStr.Split(",");
+        GD.Print(split);
+        int snapNum = Convert.ToInt32(split[0]);
+
+        PACKETSTATE pState = PACKETSTATE.UNINITIALISED;
+        for (int i = 1; i < split.Length; i++)
+        {
+            switch(split[i])
+            {
+                case PACKET.HEADER:
+                    pState = PACKETSTATE.HEADER;
+                    i++;
+                    break;
+                case PACKET.END:
+                    pState = PACKETSTATE.END;
+                    break;
+            }
+        
+            BUILTIN type = BUILTIN.NONE;
+            switch (pState)
+            {
+                case PACKETSTATE.UNINITIALISED:
+                    GD.Print("PACKETSTATE.UNINITIALISED");
+                    break;
+                case PACKETSTATE.HEADER:
+                    type = (BUILTIN)Convert.ToInt32(split[i++]);
+                    break;
+                case PACKETSTATE.END:
+                    return;
+            }
+
+            switch (type)
+            {
+                case BUILTIN.PRINT:
+
+                    break;
+                case BUILTIN.PRINT_HIGH:
+                    string val = split[i];
+                    Console.Print(val);
+                    HUD.Print(val);
+                    break;
+            }
+        }        
     }
 
     [Slave]

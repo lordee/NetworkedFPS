@@ -10,7 +10,7 @@ public class World : Node
 
     private string _mapResource = Util.GetResourceString("Maps/1on1r.tscn");
     public string MapName = "";
-    private float _gameTime = 0f;
+    public float GameTime = 0f;
     public float FrameDelta = 0f;
     private bool _active = false;
     public int ServerSnapshot;
@@ -37,7 +37,7 @@ public class World : Node
         if (_active)
         {
             FrameDelta = delta;
-            _gameTime += delta;
+            GameTime += delta;
             LocalSnapshot++;
 
             if (IsNetworkMaster())
@@ -218,7 +218,7 @@ public class World : Node
         mapInstance.Name = "Map";
 
         FrameDelta = 0f;
-        _gameTime = 0f;
+        GameTime = 0f;
         LocalSnapshot = 0;
         _active = true;
 

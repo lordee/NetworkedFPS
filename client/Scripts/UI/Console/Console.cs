@@ -102,7 +102,6 @@ public class Console : Panel, IUIItem
 		Print($"ERROR: {ToThrow}");
 	}
 
-
 	public static void ThrowLog(object ToThrow)
 	{
 		Log($"ERROR: {ToThrow}");
@@ -136,6 +135,7 @@ public class Console : Panel, IUIItem
 	[InputWithoutArg(typeof(Console), nameof(ConsoleToggle))]
 	public static void ConsoleToggle()
 	{
-		UIManager.Open(UIManager.Console);
+		//UIManager.Open(UIManager.Console);
+		UIManager.UI_ConsoleToggle();
 	}
 }
