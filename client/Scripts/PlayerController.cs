@@ -6,8 +6,8 @@ using System.Collections.Generic;
 public class PlayerController : Camera
 {
     static string _playerControllerResource = "res://Scenes/PlayerController.tscn";
-    Player _player;
-    public Player Player { get { return _player; }}
+    PlayerNode _playerNode;
+    public PlayerNode PlayerNode { get { return _playerNode; }}
 
     // Player commands, stores wish commands that the player asks for (Forward, back, jump, etc)
     private float move_forward = 0;
@@ -23,9 +23,9 @@ public class PlayerController : Camera
     {
     }
 
-    public void Init(Player p)
+    public void Init(PlayerNode p)
     {
-        _player = p;
+        _playerNode = p;
     }
 
     static public PlayerController Instance()
@@ -36,17 +36,17 @@ public class PlayerController : Camera
         return pc;
     }
 
-    public void Attach(Player player)
+    public void Attach(PlayerNode playerNode)
     {
         Node parent = this.GetParent();
         if (parent != null)
         {
             parent.RemoveChild(this);
         }
-        player.Body.Head.AddChild(this);
-        player.Body.MeshInstance.Visible = false; // TODO - just remove it
+        playerNode.Body.Head.AddChild(this);
+        playerNode.Body.MeshInstance.Visible = false; // TODO - just remove it
         Main.PlayerController = this;
-        Init(player);
+        Init(playerNode);
         SetProcess(true);
         Notification(NotificationReady);
     }
@@ -60,7 +60,7 @@ public class PlayerController : Camera
         shootTo = to + origin;
         
         PlayerCmd pCmd = new PlayerCmd();
-        pCmd.playerID = _player.NetworkID;
+        pCmd.playerID = _playerNode.Player.NetworkID;
         pCmd.snapshot = Main.World.LocalSnapshot;
         pCmd.move_forward = move_forward;
         pCmd.move_right = move_right;
@@ -74,7 +74,7 @@ public class PlayerController : Camera
         pCmd._projName = "";
         pCmd.impulses = impulses;
         impulses.Clear();
-        _player.pCmdQueue.Add(pCmd);
+        _playerNode.Player.pCmdQueue.Add(pCmd);
     }
 
     [InputWithArg(typeof(PlayerController), nameof(MoveForward))]
@@ -188,7 +188,7 @@ public class PlayerController : Camera
             if (val > 0)
             {
                 float change = Mathf.Deg2Rad(-val * Settings.Sensitivity);
-                Main.PlayerController.Player.Body.RotateHead(change);
+                Main.PlayerController._playerNode.Body.RotateHead(change);
             }
         }
 	}
@@ -201,7 +201,7 @@ public class PlayerController : Camera
             if (val > 0)
             {
                 float change = Mathf.Deg2Rad(val * Settings.Sensitivity);
-                Main.PlayerController.Player.Body.RotateHead(change);
+                Main.PlayerController._playerNode.Body.RotateHead(change);
             }
         }
 	}

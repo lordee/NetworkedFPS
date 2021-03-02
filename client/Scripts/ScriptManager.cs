@@ -63,7 +63,7 @@ public class ScriptManager : Node
 
     }
 
-    public void WorldProcessItem(Entity entity, string className)
+    public void WorldProcessItem(EntityNode entityNode, string className)
     {
 
     }

@@ -63,7 +63,7 @@ public class World : Node
                 PlayerSnap ps = new PlayerSnap();
                 ps.Origin = org;
                 ps.Velocity = velo;
-                ps.NodeName = c.Player.Name;
+                ps.NodeName = c.Player.PlayerNode.Name;
                 ps.Rotation = rot;
                 ps.CmdQueue = c.Player.pCmdQueue;
                 sn.PlayerSnap.Add(ps);
@@ -83,16 +83,17 @@ public class World : Node
         }
     }
 
+    // TODO - generic for other ents
     public void MoveEntity(Body b, float delta)
     {
-        MOVETYPE mt = b.MoveType;
+        MOVETYPE mt = b.BodyOwner.Player.MoveType;
         bool applyGrav = true;
         bool wishJump = false;
 
-        if (b.BodyOwner is Player p)
+        if (b.BodyOwner is PlayerNode p)
         {
-            wishJump = p.WishJump;
-            if (p.Body.OnLadder)
+            wishJump = p.Player.WishJump;
+            if (p.Player.OnLadder)
             {
                 applyGrav = false;
             }
@@ -103,7 +104,7 @@ public class World : Node
             case MOVETYPE.STEP:
                 if (applyGrav)
                 {
-                    b.Velocity = ApplyGravity(b.Velocity, delta);
+                    b.BodyOwner.Player.Velocity = ApplyGravity(b.BodyOwner.Player.Velocity, delta);
                 }
                 
                 if (!wishJump)
@@ -115,21 +116,21 @@ public class World : Node
                     ApplyFriction(b, 0, delta);
 
                     // FIXME - make more generic
-                    if (b.BodyOwner is Player p2)
+                    if (b.BodyOwner is PlayerNode p2)
                     {
-                        p2.WishJump = false;
+                        p2.Player.WishJump = false;
                     }
                 }
 
-                b.Velocity = b.MoveAndSlide(b.Velocity, this.Up);
-                b.TouchingGround = b.IsOnFloor();
+                b.BodyOwner.Player.Velocity = b.MoveAndSlide(b.BodyOwner.Player.Velocity, this.Up);
+                b.BodyOwner.Player.TouchingGround = b.IsOnFloor();
                 break;
         }
     }
     
     private void ApplyFriction(Body body, float t, float delta)
     {
-        Vector3 vec = body.Velocity;
+        Vector3 vec = body.BodyOwner.Player.Velocity;
         float speed;
         float newspeed;
         float control;
@@ -140,9 +141,9 @@ public class World : Node
         drop = 0.0f;
 
         // Only if on the ground then apply friction
-        if (body.TouchingGround)
+        if (body.BodyOwner.Player.TouchingGround)
         {
-            control = speed < body.Deceleration ? body.Deceleration : speed;
+            control = speed < body.BodyOwner.Player.Deceleration ? body.BodyOwner.Player.Deceleration : speed;
             drop = control * _friction * delta * t;
         }
 
@@ -152,8 +153,8 @@ public class World : Node
         if(speed > 0)
             newspeed /= speed;
 
-        body.Velocity.x *= newspeed;
-        body.Velocity.z *= newspeed;
+        body.BodyOwner.Player.Velocity.x *= newspeed;
+        body.BodyOwner.Player.Velocity.z *= newspeed;
     }
 
     private Vector3 ApplyGravity(Vector3 velocity, float delta)
@@ -162,32 +163,35 @@ public class World : Node
         return velocity;
     }
 
-    public Player AddPlayer(Client c)
+    public PlayerNode AddPlayer(Client c)
     {
         // add player to world node for each client
         Node n = GetNodeOrNull(c.NetworkID.ToString());
         if (n != null)
         {
             RemoveChild(n);
+            n.Free();
         }
-        
-        Player p = Player.Instance();
-        Players.AddChild(p);
-        p.Init(c);
-        c.Player = p;
-        Main.ScriptManager.WorldPostAddPlayer(p);
-        Main.ScriptManager.PlayerSpawn(p);
 
-        return p;
+        PlayerNode pn = PlayerNode.Instance();
+        
+        Players.AddChild(pn);
+        pn.Init(c);
+        c.Player = pn.Player;
+        Main.ScriptManager.WorldPostAddPlayer(pn.Player);
+        Main.ScriptManager.PlayerSpawn(pn.Player);
+
+        return pn;
     }
 
     public void RemovePlayer(string id)
     {
-        Player p = GetNodeOrNull(id) as Player;
+        PlayerNode p = Players.GetNodeOrNull(id) as PlayerNode;
         if (p != null)
         {
-            Main.ScriptManager.WorldPreRemovePlayer(p);
-            RemoveChild(p);
+            Main.ScriptManager.WorldPreRemovePlayer(p.Player);
+            Players.RemoveChild(p);
+            p.Free();
         }
     }
 
@@ -243,21 +247,23 @@ public class World : Node
     {
         Godot.Collections.Dictionary fields = item.Get("properties") as Godot.Collections.Dictionary;
 
+        // FIXME - item contains properties, so integrate entity in that instead... Make qodot create entitynodes instead of spatials
         if (fields != null)
         {
-            Entity ent = new Entity();
-            ent.Name = item.Name;
+            EntityNode en = new EntityNode();
+            en.Init(item.Name);
             PropertyInfo[] entFields = typeof(Entity).GetProperties();
             foreach (PropertyInfo pi in entFields)
             {
                 string fieldName = pi.Name.ToLower();
                 if (fields.Contains(fieldName))
                 {
-                    pi.SetValue(ent, fields[fieldName]);
+                    pi.SetValue(en.Entity, fields[fieldName]);
                 }
             }
             string cn = fields["classname"] != null ? (fields["classname"] as string).ToLower() : "";
-            Main.ScriptManager.WorldProcessItem(ent, cn);
+
+            Main.ScriptManager.WorldProcessItem(en, cn);
         }
     }
 
@@ -272,7 +278,7 @@ public class World : Node
             Snapshot sn = Snapshots[pos];
             foreach(PlayerSnap psn in sn.PlayerSnap)
             {
-                Player brp = GetNodeOrNull(psn.NodeName) as Player;
+                PlayerNode brp = GetNodeOrNull(psn.NodeName) as PlayerNode;
                 if (brp != null)
                 {
                     Transform t = brp.Body.GlobalTransform;
@@ -291,7 +297,7 @@ public class World : Node
         Snapshot sn = Snapshots[Snapshots.Count - 1];
         foreach(PlayerSnap psn in sn.PlayerSnap)
         {
-            Player brp = GetNodeOrNull(psn.NodeName) as Player;
+            PlayerNode brp = GetNodeOrNull(psn.NodeName) as PlayerNode;
             if (brp != null)
             {
                 Transform t = brp.Body.GlobalTransform;

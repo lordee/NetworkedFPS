@@ -4,10 +4,8 @@ using System.Collections.Generic;
 
 public class Player : Entity
 {
-    // Nodes
-    static string _playerResource = Util.GetResourceString("Scenes/Player.tscn");
-    public Body Body;
     public Client ClientOwner;
+    public PlayerNode PlayerNode;
     
     public int NetworkID;
     
@@ -21,7 +19,13 @@ public class Player : Entity
     private float _jumpSpeed = 27.0f;                // The speed at which the character's up axis gains when hitting jump
     private float _maxStairAngle = 20f;
     private float _stairJumpHeight = 9F;
+    public float Acceleration = 14.0f;
+    public float Deceleration = 10.0f;
 
+    public bool TouchingGround = false;
+    public bool OnLadder = false;
+    public MOVETYPE MoveType;
+    public Vector3 Velocity;
     public float CurrentHealth = 100;
     public float CurrentArmour = 0;
     public float TimeDead = 0;
@@ -30,36 +34,13 @@ public class Player : Entity
     public PSTATE PState;
     public List<PlayerCmd> pCmdQueue = new List<PlayerCmd>();
 
-    // Called when the node enters the scene tree for the first time.
-    public override void _Ready()
+    public Player(Client client, PlayerNode playerNode)
     {
-        
-    }
-
-    public Player()
-    {
-        
-    }
-
-    static public Player Instance()
-    {
-        PackedScene ps = ResourceLoader.Load(_playerResource) as PackedScene;
-        Player player = ps.Instance() as Player;
-
-        return player;
-    }
-
-    public void Init(Client client)
-    {
+        PlayerNode = playerNode;
         ClientOwner = client;
         NetworkID = ClientOwner.NetworkID;
-        Name = ClientOwner.NetworkID.ToString();
+        
         NetName = NetworkID.ToString(); // FIXME - first piece of info for new clients
-
-        Body = GetNodeOrNull("Body") as Body;
-        Body.Init(this);
-        Body.Acceleration = 14.0f;
-        Body.Deceleration = 10.0f;
     }
 
     public void Frame(float delta)
@@ -88,9 +69,9 @@ public class Player : Entity
             pCmdQueue.Sort((x,y) => x.snapshot.CompareTo(y.snapshot));
         }
 
-        Transform t = Body.GlobalTransform;
+        Transform t = PlayerNode.Body.GlobalTransform;
         t.origin = PredictedState.Origin; // by this point it's a new serverstate
-        Body.GlobalTransform = t;
+        PlayerNode.Body.GlobalTransform = t;
 
         foreach(PlayerCmd pCmd in pCmdQueue)
         {
@@ -98,7 +79,7 @@ public class Player : Entity
             {
                 continue;
             }
-            Body.Rotation = pCmd.rotation;
+            PlayerNode.Body.Rotation = pCmd.rotation;
 
             ClientOwner.LastSnapshot = pCmd.snapshot;
 
@@ -113,7 +94,7 @@ public class Player : Entity
             }
         }      
 
-        Main.World.MoveEntity(this.Body, delta);
+        Main.World.MoveEntity(PlayerNode.Body, delta);
         
 
         SetServerState(PredictedState.Origin, PredictedState.Velocity, PredictedState.Rotation, CurrentHealth, CurrentArmour);
@@ -146,7 +127,7 @@ public class Player : Entity
 
     private void DefaultProcess(PlayerCmd pCmd, float delta)
     {
-        if (IsNetworkMaster())
+        if (Main.Network.IsNetworkMaster())
         {
             int diff = Main.World.LocalSnapshot - pCmd.snapshot;
             if (diff < 0)
@@ -163,7 +144,7 @@ public class Player : Entity
 
         Main.World.FastForwardPlayers();
         
-        if (Body.MoveType == MOVETYPE.STEP)
+        if (MoveType == MOVETYPE.STEP)
         {
             this.ProcessMovementCmd(PredictedState, pCmd, delta);
         }
@@ -171,7 +152,7 @@ public class Player : Entity
 
     private void ProcessMovementCmd(State predState, PlayerCmd pCmd, float delta)
     {
-        Body.Velocity = predState.Velocity;
+        Velocity = predState.Velocity;
 
         // queue jump
         if (pCmd.move_up == 1 && !WishJump)
@@ -183,7 +164,7 @@ public class Player : Entity
             WishJump = false;
         }
 
-        if (Body.TouchingGround || Body.OnLadder)
+        if (TouchingGround || OnLadder)
         {
             GroundMove(delta, pCmd);
         }
@@ -206,40 +187,40 @@ public class Player : Entity
 
         float wishSpeed = wishDir.Length();
         wishSpeed *= MoveSpeed;
-        Accelerate(wishDir, wishSpeed, Body.Deceleration, delta);
+        Accelerate(wishDir, wishSpeed, Deceleration, delta);
        
-        if (Body.OnLadder)
+        if (OnLadder)
         {
             if (pCmd.move_forward != 0f)
             {
-                Body.Velocity.y = MoveSpeed * (pCmd.cam_angle / 90) * pCmd.move_forward;
+                Velocity.y = MoveSpeed * (pCmd.cam_angle / 90) * pCmd.move_forward;
             }
             else
             {
-                Body.Velocity.y = 0;
+                Velocity.y = 0;
             }
             if (pCmd.move_right == 0f)
             {
-                Body.Velocity.x = 0;
-                Body.Velocity.z = 0;
+                Velocity.x = 0;
+                Velocity.z = 0;
             }
         }
 
         // walk up stairs
-        if (wishSpeed > 0 && Body.StairCatcher.IsColliding())
+        if (wishSpeed > 0 && PlayerNode.Body.StairCatcher.IsColliding())
         {
-            Vector3 col = Body.StairCatcher.GetCollisionNormal();
+            Vector3 col = PlayerNode.Body.StairCatcher.GetCollisionNormal();
             float ang = Mathf.Rad2Deg(Mathf.Acos(col.Dot(Main.World.Up)));
             if (ang < _maxStairAngle)
             {
-                Body.Velocity.y = _stairJumpHeight;
+                Velocity.y = _stairJumpHeight;
             }
         }
 
-        if (WishJump && Body.IsOnFloor())
+        if (WishJump && PlayerNode.Body.IsOnFloor())
         {
             // FIXME - if we add jump speed velocity we enable trimping right?
-            Body.Velocity.y = _jumpSpeed;
+            Velocity.y = _jumpSpeed;
         }
     }
 
@@ -263,7 +244,7 @@ public class Player : Entity
 
         // CPM: Aircontrol
         float wishspeed2 = wishspeed;
-        if (Body.Velocity.Dot(wishdir) < 0)
+        if (Velocity.Dot(wishdir) < 0)
             accel = _airDecceleration;
         else
             accel = _airAcceleration;
@@ -292,15 +273,15 @@ public class Player : Entity
         float accelspeed;
         float currentspeed;
         
-        currentspeed = Body.Velocity.Dot(wishdir);
+        currentspeed = Velocity.Dot(wishdir);
         addspeed = wishspeed - currentspeed;
         if(addspeed <= 0)
             return;
         accelspeed = accel * delta * wishspeed;
         //if(accelspeed > addspeed)
          //   accelspeed = addspeed;
-        Body.Velocity.x += accelspeed * wishdir.x;
-        Body.Velocity.z += accelspeed * wishdir.z;
+        Velocity.x += accelspeed * wishdir.x;
+        Velocity.z += accelspeed * wishdir.z;
     }
 
     /*
@@ -332,7 +313,7 @@ public class Player : Entity
 
     private void DeadProcess(PlayerCmd pCmd, float delta)
     {
-        if (Body.TouchingGround)
+        if (TouchingGround)
         {
             TimeDead += delta;
         }

@@ -22,6 +22,7 @@
     <Compile Include="Scripts\Lua\Builtins.cs"/>
     <Compile Include="share\Scripts\Client.cs"/>
     <Compile Include="share\Scripts\Player.cs"/>
+    <Compile Include="share\Scripts\PlayerNode.cs"/>
     <Compile Include="Scripts\ScriptManager.cs"/>
     <Compile Include="share\Scripts\World.cs"/>
     <Compile Include="share\Scripts\Enums.cs"/>
@@ -30,6 +31,7 @@
     <Compile Include="share\Scripts\PlayerCmd.cs"/>
     <Compile Include="share\Scripts\State.cs"/>
     <Compile Include="share\Scripts\Util.cs"/>
+    <Compile Include="share\Scripts\EntityNode.cs"/>
     <Compile Include="share\Scripts\ReliablePacket.cs"/>
   </ItemGroup>
   <ItemGroup>

@@ -62,14 +62,14 @@ public class Network : Node
     {
         Client c = new Client(id);
         Clients.Add(c);
-        Player p = Main.World.AddPlayer(c);
+        PlayerNode p = Main.World.AddPlayer(c);
 
         if(GetTree().GetNetworkUniqueId() == c.NetworkID)
         {
             Main.Client = c;
             PlayerController pc = PlayerController.Instance();
             pc.Attach(p);
-            UIManager.LoadHUD(p);
+            UIManager.LoadHUD(p.Player);
         }
     }
 
@@ -82,7 +82,7 @@ public class Network : Node
         {
             pc = PlayerController.Instance();
         }
-        Player p = Main.Client.Player;
+        PlayerNode p = Main.Client.Player.PlayerNode;
         pc.Attach(p);
     }
 
@@ -91,7 +91,6 @@ public class Network : Node
     {
         string pkStr = Encoding.UTF8.GetString(packet);
         string[] split = pkStr.Split(",");
-        GD.Print(split);
         int snapNum = Convert.ToInt32(split[0]);
 
         PACKETSTATE pState = PACKETSTATE.UNINITIALISED;
