@@ -3,6 +3,7 @@
     // Hover to view descriptions of existing attributes.
     // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
     "version": "0.2.0",
+    
     "configurations": [
         {
             "name": "Launch",
@@ -17,6 +18,13 @@
             "request": "attach",
             "address": "localhost",
             "port": 23685
+        },
+        {
+            "name": "MoonSharp Attach",
+            "type": "moonsharp-debug",
+            "request": "attach",
+            "debugServer" : 41912,
+            "HELP": "Please set 'debugServer':41912 (or whatever port you are connecting to) right after the 'version' field in this json."
         }
     ]
 }

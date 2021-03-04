@@ -4,6 +4,7 @@ using System;
 public class ScriptManager : Node
 {
     // client side scriptmanager
+    static public MoonSharp.Interpreter.Script ScriptServer = new MoonSharp.Interpreter.Script();
 
     // Called when the node enters the scene tree for the first time.
     public override void _Ready()

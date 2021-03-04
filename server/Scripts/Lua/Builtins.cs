@@ -22,6 +22,7 @@ static public class Builtins
         {
             sb.Append(s2);
         }
+        GD.Print(sb.ToString());
 
         foreach(Client c in Main.Network.Clients)
         {

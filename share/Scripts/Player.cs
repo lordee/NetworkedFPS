@@ -1,6 +1,7 @@
 using Godot;
 using System;
 using System.Collections.Generic;
+using MoonSharp.Interpreter;
 
 public class Player : Entity
 {
@@ -34,13 +35,13 @@ public class Player : Entity
     public PSTATE PState;
     public List<PlayerCmd> pCmdQueue = new List<PlayerCmd>();
 
-    public Player(Client client, PlayerNode playerNode)
+    public Player(Client client, PlayerNode playerNode) : base()
     {
         PlayerNode = playerNode;
         ClientOwner = client;
         NetworkID = ClientOwner.NetworkID;
-        
-        NetName = NetworkID.ToString(); // FIXME - first piece of info for new clients
+        NetName = NetworkID.ToString();
+        ClassName = "player";
     }
 
     public void Frame(float delta)
