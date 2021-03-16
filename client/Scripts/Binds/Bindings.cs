@@ -366,7 +366,6 @@ public class Bindings : Node
 		return In;
 	}
 
-
 	public override void _PhysicsProcess(float Delta)
 	{
 		// FIXME - change this to use binds system, at least for toggle console?

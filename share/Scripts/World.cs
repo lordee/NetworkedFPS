@@ -26,6 +26,9 @@ public class World : Node
 
     public List<Snapshot> Snapshots = new List<Snapshot>();
 
+    // FIXME - replace with entity manager node
+    public List<Entity> Entities = new List<Entity>();
+
     // Called when the node enters the scene tree for the first time.
     public override void _Ready()
     {
@@ -178,8 +181,6 @@ public class World : Node
         Players.AddChild(pn);
         pn.Init(c);
         c.Player = pn.Player;
-        Main.ScriptManager.WorldPostAddPlayer(pn.Player);
-        Main.ScriptManager.PlayerSpawn(pn.Player);
 
         return pn;
     }
@@ -251,6 +252,8 @@ public class World : Node
         if (fields != null)
         {
             EntityNode en = new EntityNode();
+            // FIXME - need entity manager, add this to  world for now even though it's under bsp
+            AddChild(en);
             en.Init(item.Name);
             PropertyInfo[] entFields = typeof(Entity).GetProperties();
             foreach (PropertyInfo pi in entFields)
@@ -261,8 +264,15 @@ public class World : Node
                     pi.SetValue(en.Entity, fields[fieldName]);
                 }
             }
+            foreach(string field in Entity.MapCustomFieldDefs)
+            {
+                if (fields.Contains(field.ToLower()))
+                {
+                    en.Entity.MapFields.Add(field, fields[field.ToLower()].ToString());
+                }
+            }
             string cn = fields["classname"] != null ? (fields["classname"] as string).ToLower() : "";
-
+            Entities.Add(en.Entity);
             Main.ScriptManager.WorldProcessItem(en, cn);
         }
     }

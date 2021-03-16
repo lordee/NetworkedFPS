@@ -1,6 +1,7 @@
 using System;
 using Godot;
 using System.Text;
+using System.Reflection;
 
 static public class Builtins
 {
@@ -31,5 +32,26 @@ static public class Builtins
                 Value = sb.ToString()
             });
         }
+    }
+
+    static public Entity Find(Entity entity, string fieldName, string fieldValue)
+    {
+        // FIXME - need entity manager for created entities, add map ents on load to that
+        // FIXME - need to start loop at passed entity in list
+        foreach (Entity ent in Main.World.Entities)
+        {
+            // FIXME - this is awful
+            switch (fieldName.ToLower())
+            {
+                case "classname":
+                    if (ent.ClassName.ToLower() == fieldValue.ToLower())
+                    {
+                        return ent;
+                    }
+                    break;
+            }
+        }
+
+        return null;
     }
 }

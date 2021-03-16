@@ -1,20 +1,40 @@
 using System.Collections.Generic;
 using MoonSharp.Interpreter;
-
+using Godot;
+using System.Linq;
 
 public class Entity
 {
     public EntityNode EntityNode;
-    public Dictionary<string, DynValue> Fields;
     
     // default fields that engine needs, modified by options etc
-    public string NetName = "";
-    public string ClassName = "";
+    public string NetName { get; set; }
+    public string ClassName { get; set; }
+    public MoonSharp.Interpreter.Table Fields;
 
-    static public Dictionary<string, DynValue> CustomFieldDefs = new Dictionary<string, DynValue>();
+    // FIXME - testing, incorporate in to fields later
+    public Dictionary<string, string> MapFields = new Dictionary<string, string>();
+
+    private Vector3 _origin;
+    public Vector3 Origin { 
+        get {
+            return _origin;
+        }
+        set {
+            Transform t = EntityNode.GlobalTransform;
+            t.origin = value;
+            EntityNode.GlobalTransform = t;
+            _origin = value;
+        }
+    }
+
+    static public List<string> MapCustomFieldDefs = new List<string>();
 
     public Entity()
     {
-        Fields = new Dictionary<string, DynValue>(CustomFieldDefs); // TODO - is this deep copy?
+        if (Main.Network.IsNetworkMaster())
+        {
+            Fields = new Table(ScriptManager.ScriptServer);
+        }
     }
 }

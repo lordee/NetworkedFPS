@@ -6,7 +6,28 @@ using MoonSharp.Interpreter;
 public class Player : Entity
 {
     public Client ClientOwner;
+    [MoonSharpHidden]
     public PlayerNode PlayerNode;
+
+    private Vector3 _origin;
+    new public Vector3 Origin { 
+        get {
+            return _origin;
+        }
+        set {
+            Transform t = PlayerNode.Body.GlobalTransform;
+            t.origin = value;
+            PlayerNode.Body.GlobalTransform = t;
+            _origin = value;
+
+            if (Main.Network.IsNetworkMaster())
+            {
+                SetServerState(PlayerNode.Body.GlobalTransform.origin
+                , ServerState.Velocity, ServerState.Rotation
+                , CurrentHealth, CurrentArmour);
+            }
+        }
+    }
     
     public int NetworkID;
     
@@ -25,7 +46,7 @@ public class Player : Entity
 
     public bool TouchingGround = false;
     public bool OnLadder = false;
-    public MOVETYPE MoveType;
+    public MOVETYPE MoveType = MOVETYPE.STEP;
     public Vector3 Velocity;
     public float CurrentHealth = 100;
     public float CurrentArmour = 0;
@@ -97,8 +118,15 @@ public class Player : Entity
 
         Main.World.MoveEntity(PlayerNode.Body, delta);
         
-
-        SetServerState(PredictedState.Origin, PredictedState.Velocity, PredictedState.Rotation, CurrentHealth, CurrentArmour);
+        if (Main.Network.IsNetworkMaster())
+        {
+            SetServerState(PlayerNode.Body.GlobalTransform.origin, Velocity, PlayerNode.Body.Rotation, CurrentHealth, CurrentArmour);
+        }
+        else
+        {
+            Main.Network.SendPMovement(1, ClientOwner.NetworkID, pCmdQueue);
+        }
+        
         TrimCmdQueue();
         
         Main.ScriptManager.PlayerPostFrame(this);
