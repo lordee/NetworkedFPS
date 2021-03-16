@@ -63,7 +63,8 @@ public class Network : Node
     private string BuildClientCmdPacket(int id, List<PlayerCmd> pCmdQueue)
     {
         sb.Clear();
-        sb.Append(Main.World.ServerSnapshot);
+        //sb.Append(Main.World.ServerSnapshot);
+        sb.Append(Main.World.LocalSnapshot);
         sb.Append(",");
         sb.Append(id.ToString());
         sb.Append(",");
