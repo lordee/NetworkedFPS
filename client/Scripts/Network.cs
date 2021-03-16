@@ -7,6 +7,7 @@ using System.Linq;
 public class Network : Node
 {
     public List<Client> Clients = new List<Client>();
+    StringBuilder sb = new StringBuilder();
 
     // Called when the node enters the scene tree for the first time.
     public override void _Ready()
@@ -49,6 +50,90 @@ public class Network : Node
     public void ConnectionRemoved()
     {
         GD.Print("ConnectionRemoved: ");
+    }
+
+    public void SendPMovement(int RecID, int id, List<PlayerCmd> pCmdQueue)
+    {       
+        string packetString = BuildClientCmdPacket(id, pCmdQueue);
+        byte[] packetBytes = Encoding.UTF8.GetBytes(packetString);
+
+        RpcUnreliableId(RecID, nameof(ReceivePMovementServer), packetBytes);
+    }
+
+    private string BuildClientCmdPacket(int id, List<PlayerCmd> pCmdQueue)
+    {
+        sb.Clear();
+        sb.Append(Main.World.ServerSnapshot);
+        sb.Append(",");
+        sb.Append(id.ToString());
+        sb.Append(",");
+        foreach(PlayerCmd pCmd in pCmdQueue)
+        {
+            sb.Append(PACKET.HEADER);
+            sb.Append(",");
+            sb.Append(pCmd.snapshot);
+            sb.Append(",");
+            sb.Append(pCmd.move_forward);
+            sb.Append(",");
+            sb.Append(pCmd.move_right);
+            sb.Append(",");
+            sb.Append(pCmd.move_up);
+            sb.Append(",");
+            sb.Append(pCmd.aim.x.x);
+            sb.Append(",");
+            sb.Append(pCmd.aim.x.y);
+            sb.Append(",");
+            sb.Append(pCmd.aim.x.z);
+            sb.Append(",");
+            sb.Append(pCmd.aim.y.x);
+            sb.Append(",");
+            sb.Append(pCmd.aim.y.y);
+            sb.Append(",");
+            sb.Append(pCmd.aim.y.z);
+            sb.Append(",");
+            sb.Append(pCmd.aim.z.x);
+            sb.Append(",");
+            sb.Append(pCmd.aim.z.y);
+            sb.Append(",");
+            sb.Append(pCmd.aim.z.z);
+            sb.Append(",");
+            sb.Append(pCmd.cam_angle);
+            sb.Append(",");
+            sb.Append(pCmd.rotation.x);
+            sb.Append(",");
+            sb.Append(pCmd.rotation.y);
+            sb.Append(",");
+            sb.Append(pCmd.rotation.z);
+            sb.Append(",");
+            sb.Append(pCmd.attack);
+            sb.Append(",");
+            sb.Append("\"" + pCmd.projName + "\"");
+            sb.Append(",");
+            sb.Append(pCmd.attackDir.x);
+            sb.Append(",");
+            sb.Append(pCmd.attackDir.y);
+            sb.Append(",");
+            sb.Append(pCmd.attackDir.z);
+            sb.Append(",");
+
+            if (pCmd.impulses.Count > 0)
+            {
+                sb.Append(PACKET.IMPULSE);
+                sb.Append(",");
+                foreach(float imp in pCmd.impulses)
+                {
+                    sb.Append(imp);
+                    sb.Append(",");
+                }
+            }
+            sb.Append(PACKET.END);
+            sb.Append(",");
+        }
+        if (pCmdQueue.Count > 0)
+        {
+            sb.Remove(sb.Length - 1, 1);
+        }
+        return sb.ToString();
     }
 
     [Slave]
@@ -214,5 +299,11 @@ public class Network : Node
         Client c = Clients.Where(p2 => p2.NetworkID == id).First();
         c.Ping = ping;
         c.Player.SetServerState(org, velo, rot, health, armour);
+    }
+
+    // STUBS
+    public void ReceivePMovementServer(byte[] packet)
+    {
+        // stub for server
     }
 }

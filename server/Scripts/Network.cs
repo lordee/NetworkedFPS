@@ -52,6 +52,7 @@ public class Network : Node
         Client c = new Client(id);
         Clients.Add(c);
 
+        
         Main.World.AddPlayer(c);
         Rpc(nameof(AddPlayer), id);
         RpcId(c.NetworkID, nameof(ChangeMap), Main.World.MapName);
@@ -290,5 +291,9 @@ public class Network : Node
         // STUB for client
     }
 
-    
+    // FIXME - player shouldn't reference this, playercontroller should
+    public void SendPMovement(int RecID, int id, List<PlayerCmd> pCmdQueue)
+    {  
+        // STUB
+    }
 }
