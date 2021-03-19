@@ -1,4 +1,4 @@
-[gd_scene load_steps=12 format=2]
+[gd_scene load_steps=13 format=2]
 
 [ext_resource path="res://Scripts/Main.cs" type="Script" id=1]
 [ext_resource path="res://Scripts/Network.cs" type="Script" id=2]
@@ -11,6 +11,7 @@
 [ext_resource path="res://Scenes/UI/Console.tscn" type="PackedScene" id=9]
 [ext_resource path="res://Scenes/UI/HUD.tscn" type="PackedScene" id=10]
 [ext_resource path="res://Scripts/Binds/Bindings.cs" type="Script" id=11]
+[ext_resource path="res://Scripts/SoundManager.cs" type="Script" id=12]
 
 [node name="Main" type="Node"]
 script = ExtResource( 1 )
@@ -45,3 +46,6 @@ visible = false
 
 [node name="Bindings" type="Node" parent="."]
 script = ExtResource( 11 )
+
+[node name="SoundManager" type="Node" parent="."]
+script = ExtResource( 12 )

@@ -11,7 +11,7 @@ public class PlayerCmd
     public Basis aim;
     public float cam_angle;
     public Vector3 rotation;
-    public float attack;
+    public int attack;
     public Vector3 attackDir;
     public string _projName;
     public string projName { 

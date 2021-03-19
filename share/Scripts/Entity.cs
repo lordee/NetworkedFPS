@@ -16,6 +16,7 @@ public class Entity
     public Dictionary<string, string> MapFields = new Dictionary<string, string>();
 
     private Vector3 _origin;
+    // FIXME - handle this in entitynode instead?
     public Vector3 Origin { 
         get {
             return _origin;
@@ -29,12 +30,13 @@ public class Entity
     }
 
     static public List<string> MapCustomFieldDefs = new List<string>();
-
+    static public MoonSharp.Interpreter.Table Fields2;
     public Entity()
     {
         if (Main.Network.IsNetworkMaster())
         {
-            Fields = new Table(ScriptManager.ScriptServer);
+            //Fields = new Table(ScriptManager.ScriptServer);
+            Fields = Fields2;
         }
     }
 }

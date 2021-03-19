@@ -30,6 +30,7 @@ public class Network : Node
 
     public override void _PhysicsProcess(float delta)
     {
+        // FIXME - culling of info sent based on leaf/cull data
         string packetString = BuildPacketString();
         byte[] packetBytes = Encoding.UTF8.GetBytes(packetString);
         RpcUnreliable(nameof(ReceivePacket), packetBytes);
@@ -43,6 +44,14 @@ public class Network : Node
                 RpcId(c.NetworkID, nameof(ReceiveReliablePacket), reliablePacketBytes);
                 c.ReliablePackets.Clear();
             }
+
+            if (c.UnreliablePackets.Count > 0)
+            {
+                string unreliablePacketString = BuildUnreliablePacketString(c.UnreliablePackets);
+                byte[] unreliablePacketBytes = Encoding.UTF8.GetBytes(unreliablePacketString);
+                RpcUnreliableId(c.NetworkID, nameof(ReceiveUnreliablePacket), unreliablePacketBytes);
+                c.UnreliablePackets.Clear();
+            }
         }
     }
 
@@ -51,7 +60,6 @@ public class Network : Node
         GD.Print("Client connected - ID: " +  id);
         Client c = new Client(id);
         Clients.Add(c);
-
         
         Main.World.AddPlayer(c);
         Rpc(nameof(AddPlayer), id);
@@ -85,25 +93,52 @@ public class Network : Node
         GD.Print("ConnectionRemoved");
     }
 
-    private string BuildReliablePacketString(List<ReliablePacket> packets)
+    private string BuildReliablePacketString(List<PacketSnippet> packets)
     {
         sb.Clear();
         sb.Append(Main.World.ServerSnapshot);
         sb.Append(",");
-        sb.Append(PACKET.HEADER);
-        sb.Append(",");
-        foreach (ReliablePacket packet in packets)
+        foreach (PacketSnippet packet in packets)
         {
             packet.SnapNumSent = Main.World.ServerSnapshot;
-
+            sb.Append(PACKET.HEADER);
+            sb.Append(",");
             sb.Append((int)packet.Type);
             sb.Append(",");
             sb.Append(packet.Value);
             sb.Append(",");
-        }
-        if (sb.Length > 0)
-        {
             sb.Append(PACKET.END);
+            sb.Append(",");
+        }
+        if (packets.Count > 0)
+        {
+            sb.Remove(sb.Length - 1, 1);
+        }
+
+        return sb.ToString();
+    }
+
+    private string BuildUnreliablePacketString(List<PacketSnippet> packets)
+    {
+        sb.Clear();
+        sb.Append(Main.World.ServerSnapshot);
+        sb.Append(",");
+        
+        foreach (PacketSnippet packet in packets)
+        {
+            packet.SnapNumSent = Main.World.ServerSnapshot;
+            sb.Append(PACKET.HEADER);
+            sb.Append(",");
+            sb.Append((int)packet.Type);
+            sb.Append(",");
+            sb.Append(packet.Value);
+            sb.Append(",");
+            sb.Append(PACKET.END);
+            sb.Append(",");
+        }
+        if (packets.Count > 0)
+        {
+            sb.Remove(sb.Length - 1, 1);
         }
 
         return sb.ToString();
@@ -114,6 +149,8 @@ public class Network : Node
         sb.Clear();
         sb.Append(Main.World.ServerSnapshot);
         sb.Append(",");
+
+        // FIXME - only send info within certain distance of clients (non culled players/ents)
         // players
         foreach(Client c in Clients)
         {
@@ -126,7 +163,7 @@ public class Network : Node
             Vector3 velo = c.Player.ServerState.Velocity;
             Vector3 rot = c.Player.ServerState.Rotation;
 
-            sb.Append((int)ENTITYTYPE.PLAYER);
+            sb.Append((int)PACKETTYPE.PLAYER);
             sb.Append(",");
             sb.Append(c.NetworkID);
             sb.Append(",");
@@ -160,7 +197,7 @@ public class Network : Node
         // projectiles
         foreach(Projectile p in _game.World.ProjectileManager.Projectiles)
         {
-            sb.Append((int)ENTITYTYPE.PROJECTILE);
+            sb.Append((int)PACKETTYPE.PROJECTILE);
             sb.Append(",");
             sb.Append(p.Name);
             sb.Append(",");
@@ -249,7 +286,7 @@ public class Network : Node
                                         );
                     pCmd.cam_angle = float.Parse(split[i++]);
                     pCmd.rotation = new Vector3(float.Parse(split[i++]), float.Parse(split[i++]), float.Parse(split[i++]));
-                    pCmd.attack = float.Parse(split[i++]);
+                    pCmd.attack = int.Parse(split[i++]);
                     pCmd._projName = split[i++];
                     pCmd.attackDir = new Vector3(float.Parse(split[i++]), float.Parse(split[i++]), float.Parse(split[i]));
                     break;
@@ -269,11 +306,15 @@ public class Network : Node
     // stubs
     public void ReceivePacket(byte[] packet)
     {
-        // stub for clients
+        // STUB for clients
+    }
+    public void ReceiveUnreliablePacket(byte[] packet)
+    {
+        // STUB for clients
     }
     public void ReceiveReliablePacket(byte[] packet)
     {
-        // stub for clients
+        // STUB for clients
     }
 
     public void AddPlayer(string id)

@@ -27,11 +27,35 @@ static public class Builtins
 
         foreach(Client c in Main.Network.Clients)
         {
-            c.ReliablePackets.Add(new ReliablePacket {
-                Type = BUILTIN.PRINT_HIGH,
+            c.ReliablePackets.Add(new PacketSnippet {
+                Type = PACKETTYPE.PRINT_HIGH,
                 Value = sb.ToString()
             });
         }
+    }
+
+    static public void BSound(Vector3 origin, string res)
+    {
+        sb.Clear();
+        sb.Append(origin.x);
+        sb.Append(",");
+        sb.Append(origin.y);
+        sb.Append(",");
+        sb.Append(origin.z);
+        sb.Append(",");
+        sb.Append(res); // FIXME - tag resources with IDs shared between client/server instead
+        foreach(Client c in Main.Network.Clients)
+        {
+            c.UnreliablePackets.Add(new PacketSnippet {
+                Type = PACKETTYPE.BSOUND,
+                Value = sb.ToString()
+            });
+        }
+    }
+
+    static public float Time()
+    {
+        return Main.World.GameTime;
     }
 
     static public Entity Find(Entity entity, string fieldName, string fieldValue)

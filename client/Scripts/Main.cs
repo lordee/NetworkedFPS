@@ -11,6 +11,7 @@ public class Main : Node
     static public PlayerController PlayerController;
     static public Client Client;
     static private Main self;
+    static public SoundManager SoundManager;
 
     static public string GameDir = "SquadFortress";
 
@@ -20,6 +21,7 @@ public class Main : Node
         Network = GetNode("Network") as Network;
         ScriptManager = GetNode("ScriptManager") as ScriptManager;
         World = GetNode("World") as World;
+        SoundManager = GetNode("SoundManager") as SoundManager;
         self = this;
         Commands = new Commands();
         Settings = new Settings();

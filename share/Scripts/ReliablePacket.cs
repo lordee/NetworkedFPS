@@ -1,8 +1,8 @@
 using System;
 
-public class ReliablePacket
+public class PacketSnippet
 {
     public int SnapNumSent;
-    public BUILTIN Type;
+    public PACKETTYPE Type;
     public object Value;
 }

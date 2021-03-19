@@ -56,6 +56,9 @@ public class Player : Entity
     public PSTATE PState;
     public List<PlayerCmd> pCmdQueue = new List<PlayerCmd>();
 
+    // for lua state checks
+    public int Attack = 0;
+
     public Player(Client client, PlayerNode playerNode) : base()
     {
         PlayerNode = playerNode;
@@ -102,8 +105,8 @@ public class Player : Entity
                 continue;
             }
             PlayerNode.Body.Rotation = pCmd.rotation;
-
             ClientOwner.LastSnapshot = pCmd.snapshot;
+            this.Attack = pCmd.attack;
 
             switch (PState)
             {
@@ -121,6 +124,7 @@ public class Player : Entity
         if (Main.Network.IsNetworkMaster())
         {
             SetServerState(PlayerNode.Body.GlobalTransform.origin, Velocity, PlayerNode.Body.Rotation, CurrentHealth, CurrentArmour);
+            _origin = PlayerNode.Body.GlobalTransform.origin;
         }
         else
         {

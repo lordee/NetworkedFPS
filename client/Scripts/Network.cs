@@ -63,7 +63,6 @@ public class Network : Node
     private string BuildClientCmdPacket(int id, List<PlayerCmd> pCmdQueue)
     {
         sb.Clear();
-        //sb.Append(Main.World.ServerSnapshot);
         sb.Append(Main.World.LocalSnapshot);
         sb.Append(",");
         sb.Append(id.ToString());
@@ -193,14 +192,14 @@ public class Network : Node
                     break;
             }
         
-            BUILTIN type = BUILTIN.NONE;
+            PACKETTYPE type = PACKETTYPE.NONE;
             switch (pState)
             {
                 case PACKETSTATE.UNINITIALISED:
                     GD.Print("PACKETSTATE.UNINITIALISED");
                     break;
                 case PACKETSTATE.HEADER:
-                    type = (BUILTIN)Convert.ToInt32(split[i++]);
+                    type = (PACKETTYPE)Convert.ToInt32(split[i++]);
                     break;
                 case PACKETSTATE.END:
                     return;
@@ -208,13 +207,66 @@ public class Network : Node
 
             switch (type)
             {
-                case BUILTIN.PRINT:
+                case PACKETTYPE.PRINT:
 
                     break;
-                case BUILTIN.PRINT_HIGH:
+                case PACKETTYPE.PRINT_HIGH:
                     string val = split[i];
                     Console.Print(val);
                     HUD.Print(val);
+                    break;
+            }
+        }        
+    }
+
+    [Slave]
+    public void ReceiveUnreliablePacket(byte[] packet)
+    {
+        string pkStr = Encoding.UTF8.GetString(packet);
+        string[] split = pkStr.Split(",");
+        int snapNum = Convert.ToInt32(split[0]);
+
+        PACKETSTATE pState = PACKETSTATE.UNINITIALISED;
+        for (int i = 1; i < split.Length; i++)
+        {
+            switch(split[i])
+            {
+                case PACKET.HEADER:
+                    pState = PACKETSTATE.HEADER;
+                    i++;
+                    break;
+                case PACKET.END:
+                    pState = PACKETSTATE.END;
+                    break;
+            }
+        
+            PACKETTYPE type = PACKETTYPE.NONE;
+            switch (pState)
+            {
+                case PACKETSTATE.UNINITIALISED:
+                    GD.Print("PACKETSTATE.UNINITIALISED");
+                    break;
+                case PACKETSTATE.HEADER:
+                    type = (PACKETTYPE)Convert.ToInt32(split[i++]);
+                    break;
+                case PACKETSTATE.END:
+                    return;
+            }
+
+            switch (type)
+            {
+                case PACKETTYPE.BSOUND:
+                    // TODO - sound manager, nodes from precache in script so no node creation
+                    
+                    Vector3 org = new Vector3();
+                    org.x = float.Parse(split[i++]);
+                    org.y = float.Parse(split[i++]);
+                    org.z = float.Parse(split[i++]);
+                    string res = split[i];
+                    res = Util.GetResourceString(res, RESOURCE.SOUND);
+        
+                    
+                    Main.SoundManager.Sound3D(org, res);
                     break;
             }
         }        
@@ -230,13 +282,13 @@ public class Network : Node
 
         for (int i = 1; i < split.Length; i++)
         {
-            ENTITYTYPE type = (ENTITYTYPE)Convert.ToInt32(split[i++]);
+            PACKETTYPE type = (PACKETTYPE)Convert.ToInt32(split[i++]);
             switch(type)
             {
-                case ENTITYTYPE.PLAYER:
+                case PACKETTYPE.PLAYER:
                     ProcessPlayerPacket(split, ref i);
                     break;
-                case ENTITYTYPE.PROJECTILE:
+                case PACKETTYPE.PROJECTILE:
                     //ProcessProjectilePacket(split, ref i);
                     break;
             }

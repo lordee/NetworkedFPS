@@ -13,7 +13,7 @@ public class PlayerController : Camera
     private float move_forward = 0;
     private float move_right = 0;
     private float move_up = 0;
-    private float attack = 0;
+    private int attack = 0;
     private float _cameraAngle = 0f;
     private Vector3 shootTo = new Vector3();
     private float _shootRange = 100000f;
@@ -128,7 +128,7 @@ public class PlayerController : Camera
         // FIXME - setinputashandle is not working on closing of UI, breaks the game when in lobby and click with mouse to close something, it sets off an attack command while client is null
         if (Main.PlayerController != null)
         {
-            Main.PlayerController.attack = val;
+            Main.PlayerController.attack = Convert.ToInt32(val);
         }
     }
 

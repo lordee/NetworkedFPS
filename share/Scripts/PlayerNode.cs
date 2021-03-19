@@ -7,7 +7,7 @@ public class PlayerNode : Node
     
 
     public Player Player;
-    static private string _resource = Util.GetResourceString("Scenes/PlayerNode.tscn");
+    static private string _resource = Util.GetResourceString("PlayerNode.tscn", RESOURCE.SCENE);
 
     static public PlayerNode Instance()
     {

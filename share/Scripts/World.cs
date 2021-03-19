@@ -8,7 +8,7 @@ public class World : Node
 {
     Node Players;
 
-    private string _mapResource = Util.GetResourceString("Maps/1on1r.tscn");
+    private string _mapResource = Util.GetResourceString("1on1r.tscn", RESOURCE.MAP);
     public string MapName = "";
     public float GameTime = 0f;
     public float FrameDelta = 0f;

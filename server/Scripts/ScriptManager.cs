@@ -11,7 +11,7 @@ public class ScriptManager : Node
     DynValue luaClientDisconnected;
     DynValue luaPlayerSpawn;
     DynValue luaProcessEntity;
-
+    DynValue luaPlayerPostFrame;
     
     public override void _Ready()
     {
@@ -35,7 +35,15 @@ public class ScriptManager : Node
 
         foreach (string line in sourceLines)
         {
-            ScriptServer.DoFile(Util.GetLuaScriptString(line), null, line);
+            try
+            {
+                ScriptServer.DoFile(Util.GetLuaScriptString(line), null, line);
+            }
+            catch (Exception e)
+            {
+                GD.Print(e);
+            }
+            
         }  
 
         // c# types to pass
@@ -46,21 +54,25 @@ public class ScriptManager : Node
         DynValue extensions = ScriptServer.Globals.Get("FieldExtensions");
         DynValue res = ScriptServer.Call(extensions);
         MoonSharp.Interpreter.Table t = res.Table;
-        foreach(var s in t.Values)
+        Entity.Fields2 = t;
+        foreach(var s in t.Pairs)
         {
-            Entity.MapCustomFieldDefs.Add(s.String);
+            Entity.MapCustomFieldDefs.Add(s.Key.String);
         }   
         
         luaClientConnected = ScriptServer.Globals.Get("ClientConnected");
         luaClientDisconnected = ScriptServer.Globals.Get("ClientDisconnected");
         luaPlayerSpawn = ScriptServer.Globals.Get("PlayerSpawn");
         luaProcessEntity = ScriptServer.Globals.Get("ProcessEntity");
+        luaPlayerPostFrame = ScriptServer.Globals.Get("PlayerPostFrame");
         server.AttachToScript(ScriptServer, "main.lua");
 
         // c# functions
         ScriptServer.Globals["Print"] = (Action<string[]>)Builtins.Print;
         ScriptServer.Globals["BPrint"] = (Action<string[]>)Builtins.BPrint;
         ScriptServer.Globals["Find"] = (Func<Entity, string, string, Entity>)Builtins.Find;
+        ScriptServer.Globals["Time"] = (Func<float>)Builtins.Time;
+        ScriptServer.Globals["BSound"] = (Action<Vector3, string>)Builtins.BSound;
     }
 
     // Player
@@ -80,9 +92,9 @@ public class ScriptManager : Node
 
     }
 
-    public void PlayerPostFrame(Player p)
+    public void PlayerPostFrame(Player player)
     {
-
+        ScriptServer.Call(luaPlayerPostFrame, player);
     }
 
     public void PlayerSpawn(Player player)

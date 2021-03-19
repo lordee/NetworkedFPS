@@ -7,7 +7,8 @@ public class Client
     public int NetworkID;
     public float Ping = 0;
     public int LastSnapshot = 0;
-    public List<ReliablePacket> ReliablePackets = new List<ReliablePacket>();
+    public List<PacketSnippet> ReliablePackets = new List<PacketSnippet>();
+    public List<PacketSnippet> UnreliablePackets = new List<PacketSnippet>();
 
     public Client(string id)
     {

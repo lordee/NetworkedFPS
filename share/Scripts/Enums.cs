@@ -1,15 +1,27 @@
 public enum MOVETYPE
 {
-    NONE,
-    MISSILE,
-    STEP,
-    FLY
+    NONE = 0,
+    MISSILE = 1,
+    STEP = 2,
+    FLY = 3,
 }
 
-public enum ENTITYTYPE // entity type
+public enum PACKETTYPE // entity type
 {
-    PLAYER = 1,
-    PROJECTILE = 2,
+    NONE,
+    PLAYER,
+    PROJECTILE,
+    PRINT,
+    PRINT_HIGH,
+    BSOUND,
+}
+
+public enum RESOURCE
+{
+    NONE,
+    SCENE,
+    SOUND,
+    MAP
 }
 
 public class PACKET
@@ -17,13 +29,6 @@ public class PACKET
     public const string IMPULSE = @"\p";
     public const string HEADER = @"\h";
     public const string END = @"\e";
-}
-
-public enum BUILTIN
-{
-    NONE,
-    PRINT,
-    PRINT_HIGH,
 }
 
 public enum PACKETSTATE
