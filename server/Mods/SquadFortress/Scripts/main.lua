@@ -38,14 +38,16 @@ TRUE = 1;
 lastspawn_team1 = nil;
 lastspawn_team2 = nil;
 
+-- map entities, all those that have a spawn function named
 function ProcessEntity(entity)
     BPrint("Processing entity ", entity.NetName);
     entity.Fields.team_no = tonumber(entity.MapFields.team_no);
+    entity.CollisionSeen = 4;
+    entity.CollisionSee = 4;
 end
 
 function info_player_teamspawn (entity)
     
-
 end
 
 function ClientConnected (player)

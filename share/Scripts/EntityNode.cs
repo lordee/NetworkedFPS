@@ -1,7 +1,7 @@
 using Godot;
 using System;
 
-public class EntityNode : Spatial
+public class EntityNode : KinematicBody
 {
     public Entity Entity;
 

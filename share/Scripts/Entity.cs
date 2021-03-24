@@ -12,6 +12,16 @@ public class Entity
     public string ClassName { get; set; }
     public MoonSharp.Interpreter.Table Fields;
 
+    public uint CollisionSeen {
+        get { return EntityNode.CollisionLayer; }
+        set { EntityNode.CollisionLayer = value; }
+    }
+
+    public uint CollisionSee {
+        get { return EntityNode.CollisionMask; }
+        set { EntityNode.CollisionMask = value; }
+    }
+
     // FIXME - testing, incorporate in to fields later
     public Dictionary<string, string> MapFields = new Dictionary<string, string>();
 
