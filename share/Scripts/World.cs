@@ -87,19 +87,16 @@ public class World : Node
     }
 
     // TODO - generic for other ents
-    public void MoveEntity(Body b, float delta)
+    public void MoveEntity(PlayerNode b, float delta)
     {
-        MOVETYPE mt = b.BodyOwner.Player.MoveType;
+        MOVETYPE mt = b.Player.MoveType;
         bool applyGrav = true;
         bool wishJump = false;
 
-        if (b.BodyOwner is PlayerNode p)
+        wishJump = b.Player.WishJump;
+        if (b.Player.OnLadder)
         {
-            wishJump = p.Player.WishJump;
-            if (p.Player.OnLadder)
-            {
-                applyGrav = false;
-            }
+            applyGrav = false;
         }
 
         switch (mt)
@@ -107,7 +104,7 @@ public class World : Node
             case MOVETYPE.STEP:
                 if (applyGrav)
                 {
-                    b.BodyOwner.Player.Velocity = ApplyGravity(b.BodyOwner.Player.Velocity, delta);
+                    b.Player.Velocity = ApplyGravity(b.Player.Velocity, delta);
                 }
                 
                 if (!wishJump)
@@ -118,22 +115,18 @@ public class World : Node
                 {
                     ApplyFriction(b, 0, delta);
 
-                    // FIXME - make more generic
-                    if (b.BodyOwner is PlayerNode p2)
-                    {
-                        p2.Player.WishJump = false;
-                    }
+                    b.Player.WishJump = false;
                 }
 
-                b.BodyOwner.Player.Velocity = b.MoveAndSlide(b.BodyOwner.Player.Velocity, this.Up);
-                b.BodyOwner.Player.TouchingGround = b.IsOnFloor();
+                b.Player.Velocity = b.MoveAndSlide(b.Player.Velocity, this.Up);
+                b.Player.TouchingGround = b.IsOnFloor();
                 break;
         }
     }
     
-    private void ApplyFriction(Body body, float t, float delta)
+    private void ApplyFriction(PlayerNode body, float t, float delta)
     {
-        Vector3 vec = body.BodyOwner.Player.Velocity;
+        Vector3 vec = body.Player.Velocity;
         float speed;
         float newspeed;
         float control;
@@ -144,9 +137,9 @@ public class World : Node
         drop = 0.0f;
 
         // Only if on the ground then apply friction
-        if (body.BodyOwner.Player.TouchingGround)
+        if (body.Player.TouchingGround)
         {
-            control = speed < body.BodyOwner.Player.Deceleration ? body.BodyOwner.Player.Deceleration : speed;
+            control = speed < body.Player.Deceleration ? body.Player.Deceleration : speed;
             drop = control * _friction * delta * t;
         }
 
@@ -156,8 +149,8 @@ public class World : Node
         if(speed > 0)
             newspeed /= speed;
 
-        body.BodyOwner.Player.Velocity.x *= newspeed;
-        body.BodyOwner.Player.Velocity.z *= newspeed;
+        body.Player.Velocity.x *= newspeed;
+        body.Player.Velocity.z *= newspeed;
     }
 
     private Vector3 ApplyGravity(Vector3 velocity, float delta)
@@ -291,9 +284,9 @@ public class World : Node
                 PlayerNode brp = GetNodeOrNull(psn.NodeName) as PlayerNode;
                 if (brp != null)
                 {
-                    Transform t = brp.Body.GlobalTransform;
+                    Transform t = brp.GlobalTransform;
                     t.origin = psn.Origin;
-                    brp.Body.GlobalTransform = t;
+                    brp.GlobalTransform = t;
                 }
             }
             rewound = true;
@@ -310,9 +303,9 @@ public class World : Node
             PlayerNode brp = GetNodeOrNull(psn.NodeName) as PlayerNode;
             if (brp != null)
             {
-                Transform t = brp.Body.GlobalTransform;
+                Transform t = brp.GlobalTransform;
                 t.origin = psn.Origin;
-                brp.Body.GlobalTransform = t;
+                brp.GlobalTransform = t;
             }
         }
     }

@@ -43,8 +43,8 @@ public class PlayerController : Camera
         {
             parent.RemoveChild(this);
         }
-        playerNode.Body.Head.AddChild(this);
-        playerNode.Body.MeshInstance.Visible = false; // TODO - just remove it
+        playerNode.Head.AddChild(this);
+        playerNode.MeshInstance.Visible = false; // TODO - just remove it
         Main.PlayerController = this;
         Init(playerNode);
         SetProcess(true);
@@ -188,7 +188,7 @@ public class PlayerController : Camera
             if (val > 0)
             {
                 float change = Mathf.Deg2Rad(-val * Settings.Sensitivity);
-                Main.PlayerController._playerNode.Body.RotateHead(change);
+                Main.PlayerController._playerNode.RotateHead(change);
             }
         }
 	}
@@ -201,7 +201,7 @@ public class PlayerController : Camera
             if (val > 0)
             {
                 float change = Mathf.Deg2Rad(val * Settings.Sensitivity);
-                Main.PlayerController._playerNode.Body.RotateHead(change);
+                Main.PlayerController._playerNode.RotateHead(change);
             }
         }
 	}

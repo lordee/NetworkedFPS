@@ -15,14 +15,14 @@ public class Player : Entity
             return _origin;
         }
         set {
-            Transform t = PlayerNode.Body.GlobalTransform;
+            Transform t = PlayerNode.GlobalTransform;
             t.origin = value;
-            PlayerNode.Body.GlobalTransform = t;
+            PlayerNode.GlobalTransform = t;
             _origin = value;
 
             if (Main.Network.IsNetworkMaster())
             {
-                SetServerState(PlayerNode.Body.GlobalTransform.origin
+                SetServerState(PlayerNode.GlobalTransform.origin
                 , ServerState.Velocity, ServerState.Rotation
                 , CurrentHealth, CurrentArmour);
             }
@@ -94,9 +94,9 @@ public class Player : Entity
             pCmdQueue.Sort((x,y) => x.snapshot.CompareTo(y.snapshot));
         }
 
-        Transform t = PlayerNode.Body.GlobalTransform;
+        Transform t = PlayerNode.GlobalTransform;
         t.origin = PredictedState.Origin; // by this point it's a new serverstate
-        PlayerNode.Body.GlobalTransform = t;
+        PlayerNode.GlobalTransform = t;
 
         foreach(PlayerCmd pCmd in pCmdQueue)
         {
@@ -104,7 +104,7 @@ public class Player : Entity
             {
                 continue;
             }
-            PlayerNode.Body.Rotation = pCmd.rotation;
+            PlayerNode.Rotation = pCmd.rotation;
             ClientOwner.LastSnapshot = pCmd.snapshot;
             this.Attack = pCmd.attack;
 
@@ -119,12 +119,12 @@ public class Player : Entity
             }
         }      
 
-        Main.World.MoveEntity(PlayerNode.Body, delta);
+        Main.World.MoveEntity(PlayerNode, delta);
         
         if (Main.Network.IsNetworkMaster())
         {
-            SetServerState(PlayerNode.Body.GlobalTransform.origin, Velocity, PlayerNode.Body.Rotation, CurrentHealth, CurrentArmour);
-            _origin = PlayerNode.Body.GlobalTransform.origin;
+            SetServerState(PlayerNode.GlobalTransform.origin, Velocity, PlayerNode.Rotation, CurrentHealth, CurrentArmour);
+            _origin = PlayerNode.GlobalTransform.origin;
         }
         else
         {
@@ -240,9 +240,9 @@ public class Player : Entity
         }
 
         // walk up stairs
-        if (wishSpeed > 0 && PlayerNode.Body.StairCatcher.IsColliding())
+        if (wishSpeed > 0 && PlayerNode.StairCatcher.IsColliding())
         {
-            Vector3 col = PlayerNode.Body.StairCatcher.GetCollisionNormal();
+            Vector3 col = PlayerNode.StairCatcher.GetCollisionNormal();
             float ang = Mathf.Rad2Deg(Mathf.Acos(col.Dot(Main.World.Up)));
             if (ang < _maxStairAngle)
             {
@@ -250,7 +250,7 @@ public class Player : Entity
             }
         }
 
-        if (WishJump && PlayerNode.Body.IsOnFloor())
+        if (WishJump && PlayerNode.IsOnFloor())
         {
             // FIXME - if we add jump speed velocity we enable trimping right?
             Velocity.y = _jumpSpeed;

@@ -1,11 +1,12 @@
 using Godot;
 
-public class PlayerNode : Node
+public class PlayerNode : KinematicBody
 {
     // Nodes
-    public Body Body;
+    public Spatial Head;
+    public RayCast StairCatcher;
+    public MeshInstance MeshInstance;  
     
-
     public Player Player;
     static private string _resource = Util.GetResourceString("PlayerNode.tscn", RESOURCE.SCENE);
 
@@ -20,9 +21,16 @@ public class PlayerNode : Node
     public void Init(Client client)
     {
         Name = client.NetworkID.ToString();
-        Body = GetNodeOrNull("Body") as Body;
-        Body.Init(this);
+        Head = (Spatial)GetNode("Head");
+        StairCatcher = (RayCast)GetNode("StairCatcher");
+        MeshInstance = GetNode("MeshInstance") as MeshInstance;
 
         Player = new Player(client, this);
+    }
+
+    public void RotateHead(float rad)
+    {
+        Head.RotateY(rad);
+        MeshInstance.RotateY(rad);
     }
 }
