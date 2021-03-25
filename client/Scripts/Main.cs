@@ -8,7 +8,20 @@ public class Main : Node
     static public World World;
     static public Settings Settings;
     static public Commands Commands;
-    static public PlayerController PlayerController;
+    static private PlayerController _playerController;
+    static public PlayerController PlayerController {
+        get {
+            if (_playerController == null || _playerController.NativeInstance == IntPtr.Zero)
+            {
+                _playerController = PlayerController.Instance();
+            }
+
+            return _playerController;
+        }
+        set {
+            _playerController = value;
+        }
+    }
     static public Client Client;
     static private Main self;
     static public SoundManager SoundManager;
