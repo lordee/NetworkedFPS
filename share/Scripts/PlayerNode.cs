@@ -1,11 +1,10 @@
 using Godot;
 
-public class PlayerNode : KinematicBody
+public class PlayerNode : EntityNode
 {
     // Nodes
     public Spatial Head;
     public RayCast StairCatcher;
-    public MeshInstance MeshInstance;  
     
     public Player Player;
     static private string _resource = Util.GetResourceString("PlayerNode.tscn", RESOURCE.SCENE);
@@ -26,6 +25,7 @@ public class PlayerNode : KinematicBody
         MeshInstance = GetNode("MeshInstance") as MeshInstance;
 
         Player = new Player(client, this);
+        Entity = Player;
     }
 
     public void RotateHead(float rad)

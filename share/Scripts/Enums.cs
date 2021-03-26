@@ -14,6 +14,7 @@ public enum PACKETTYPE // entity type
     PRINT,
     PRINT_HIGH,
     BSOUND,
+    REMOVE,
 }
 
 public enum RESOURCE

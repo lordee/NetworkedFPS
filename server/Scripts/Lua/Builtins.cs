@@ -25,13 +25,7 @@ static public class Builtins
         }
         GD.Print(sb.ToString());
 
-        foreach(Client c in Main.Network.Clients)
-        {
-            c.ReliablePackets.Add(new PacketSnippet {
-                Type = PACKETTYPE.PRINT_HIGH,
-                Value = sb.ToString()
-            });
-        }
+        BroadcastUnreliable(PACKETTYPE.PRINT_HIGH, sb.ToString());
     }
 
     static public void BSound(Vector3 origin, string res)
@@ -44,11 +38,24 @@ static public class Builtins
         sb.Append(origin.z);
         sb.Append(",");
         sb.Append(res); // FIXME - tag resources with IDs shared between client/server instead
+
+        BroadcastUnreliable(PACKETTYPE.BSOUND, sb.ToString());
+    }
+
+    static public void Remove(Entity entity)
+    {
+        Main.World.EntityManager.RemoveEntity(entity);
+        
+        BroadcastUnreliable(PACKETTYPE.REMOVE, entity.EntityNode.Name);
+    }
+
+    static public void BroadcastUnreliable(PACKETTYPE type, string value)
+    {
         foreach(Client c in Main.Network.Clients)
         {
             c.UnreliablePackets.Add(new PacketSnippet {
-                Type = PACKETTYPE.BSOUND,
-                Value = sb.ToString()
+                Type = type,
+                Value = value
             });
         }
     }
@@ -58,11 +65,16 @@ static public class Builtins
         return Main.World.GameTime;
     }
 
+    static public Entity Spawn(string sceneName)
+    {
+        return Main.World.EntityManager.Spawn(sceneName);
+    }
+
     static public Entity Find(Entity entity, string fieldName, string fieldValue)
     {
         // FIXME - need entity manager for created entities, add map ents on load to that
         // FIXME - need to start loop at passed entity in list
-        foreach (Entity ent in Main.World.Entities)
+        foreach (Entity ent in Main.World.EntityManager.Entities)
         {
             // FIXME - this is awful
             switch (fieldName.ToLower())

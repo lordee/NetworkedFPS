@@ -7,6 +7,7 @@ using System.Reflection;
 public class World : Node
 {
     Node Players;
+    public EntityManager EntityManager;
 
     private string _mapResource = Util.GetResourceString("1on1r.tscn", RESOURCE.MAP);
     public string MapName = "";
@@ -26,13 +27,11 @@ public class World : Node
 
     public List<Snapshot> Snapshots = new List<Snapshot>();
 
-    // FIXME - replace with entity manager node
-    public List<Entity> Entities = new List<Entity>();
-
     // Called when the node enters the scene tree for the first time.
     public override void _Ready()
     {
         Players = GetNode("Players");
+        EntityManager = GetNode("EntityManager") as EntityManager;
     }
 
     public override void _PhysicsProcess(float delta)
@@ -81,22 +80,41 @@ public class World : Node
                 Snapshots.RemoveAt(0);
             }
 
-            // move entities
-            
+            foreach (Entity entity in EntityManager.Entities)
+            {
+                MoveEntity(entity.EntityNode, delta);
+
+                if (entity.NextThink != 0 && entity.NextThink <= Main.World.GameTime)
+                {
+                    Main.ScriptManager.EntityThink(entity);
+                }
+            }
+
+            foreach (Entity entity in EntityManager.RemoveEntityQueue)
+            {
+                EntityManager.Entities.Remove(entity);
+                entity.EntityNode.GetParent().RemoveChild(entity.EntityNode);
+                entity.EntityNode.QueueFree();
+            }
+
+            EntityManager.RemoveEntityQueue.Clear();
         }
     }
 
     // TODO - generic for other ents
-    public void MoveEntity(PlayerNode b, float delta)
+    public void MoveEntity(EntityNode entityNode, float delta)
     {
-        MOVETYPE mt = b.Player.MoveType;
+        MOVETYPE mt = entityNode.Entity.MoveType;
         bool applyGrav = true;
         bool wishJump = false;
 
-        wishJump = b.Player.WishJump;
-        if (b.Player.OnLadder)
+        if (entityNode is PlayerNode p)
         {
-            applyGrav = false;
+            wishJump = p.Player.WishJump;
+            if (p.Player.OnLadder)
+            {
+                applyGrav = false;
+            }
         }
 
         switch (mt)
@@ -104,29 +122,41 @@ public class World : Node
             case MOVETYPE.STEP:
                 if (applyGrav)
                 {
-                    b.Player.Velocity = ApplyGravity(b.Player.Velocity, delta);
+                    entityNode.Entity.Velocity = ApplyGravity(entityNode.Entity.Velocity, delta);
                 }
                 
                 if (!wishJump)
                 {
-                    ApplyFriction(b, 1.0f, delta);
+                    ApplyFriction(entityNode, 1.0f, delta);
                 }
                 else
                 {
-                    ApplyFriction(b, 0, delta);
+                    ApplyFriction(entityNode, 0, delta);
 
-                    b.Player.WishJump = false;
+                    if (entityNode is PlayerNode p2)
+                    {
+                        p2.Player.WishJump = false;
+                    }
                 }
 
-                b.Player.Velocity = b.MoveAndSlide(b.Player.Velocity, this.Up);
-                b.Player.TouchingGround = b.IsOnFloor();
+                entityNode.Entity.Velocity = entityNode.MoveAndSlide(entityNode.Entity.Velocity, this.Up);
+                entityNode.Entity.TouchingGround = entityNode.IsOnFloor();
+                break;
+            case MOVETYPE.MISSILE:
+                Vector3 motion = new Vector3();
+                motion = entityNode.Entity.Velocity * delta;
+                KinematicCollision c = entityNode.MoveAndCollide(motion);
+                if (c != null)
+                {
+                    Main.ScriptManager.EntityTouch(entityNode.Entity, c);
+                }
                 break;
         }
     }
     
-    private void ApplyFriction(PlayerNode body, float t, float delta)
+    private void ApplyFriction(EntityNode body, float t, float delta)
     {
-        Vector3 vec = body.Player.Velocity;
+        Vector3 vec = body.Entity.Velocity;
         float speed;
         float newspeed;
         float control;
@@ -137,9 +167,9 @@ public class World : Node
         drop = 0.0f;
 
         // Only if on the ground then apply friction
-        if (body.Player.TouchingGround)
+        if (body.Entity.TouchingGround)
         {
-            control = speed < body.Player.Deceleration ? body.Player.Deceleration : speed;
+            control = speed < body.Entity.Deceleration ? body.Entity.Deceleration : speed;
             drop = control * _friction * delta * t;
         }
 
@@ -149,8 +179,8 @@ public class World : Node
         if(speed > 0)
             newspeed /= speed;
 
-        body.Player.Velocity.x *= newspeed;
-        body.Player.Velocity.z *= newspeed;
+        body.Entity.Velocity.x *= newspeed;
+        body.Entity.Velocity.z *= newspeed;
     }
 
     private Vector3 ApplyGravity(Vector3 velocity, float delta)
@@ -162,10 +192,10 @@ public class World : Node
     public PlayerNode AddPlayer(Client c)
     {
         // add player to world node for each client
-        Node n = GetNodeOrNull(c.NetworkID.ToString());
+        Node n = Players.GetNodeOrNull(c.NetworkID.ToString());
         if (n != null)
         {
-            RemoveChild(n);
+            Players.RemoveChild(n);
             n.Free();
         }
 
@@ -225,7 +255,7 @@ public class World : Node
 
         foreach(Spatial ent in ents)
         {
-            ProcessWorldItem(ent);
+            EntityManager.ProcessWorldItem(ent);
         }
 
         Spatial triggers = mapInstance.GetNode("Triggers") as Spatial;
@@ -233,40 +263,7 @@ public class World : Node
 
         foreach(Spatial t in triggerents)
         {
-            ProcessWorldItem(t);
-        }
-    }
-
-    private void ProcessWorldItem(Spatial item)
-    {
-        Godot.Collections.Dictionary fields = item.Get("properties") as Godot.Collections.Dictionary;
-
-        // FIXME - item contains properties, so integrate entity in that instead... Make qodot create entitynodes instead of spatials
-        if (fields != null)
-        {
-            EntityNode en = new EntityNode();
-            // FIXME - need entity manager, add this to  world for now even though it's under bsp
-            AddChild(en);
-            en.Init(item.Name);
-            PropertyInfo[] entFields = typeof(Entity).GetProperties();
-            foreach (PropertyInfo pi in entFields)
-            {
-                string fieldName = pi.Name.ToLower();
-                if (fields.Contains(fieldName))
-                {
-                    pi.SetValue(en.Entity, fields[fieldName]);
-                }
-            }
-            foreach(string field in Entity.MapCustomFieldDefs)
-            {
-                if (fields.Contains(field.ToLower()))
-                {
-                    en.Entity.MapFields.Add(field, fields[field.ToLower()].ToString());
-                }
-            }
-            string cn = fields["classname"] != null ? (fields["classname"] as string).ToLower() : "";
-            Entities.Add(en.Entity);
-            Main.ScriptManager.WorldProcessItem(en, cn);
+            EntityManager.ProcessWorldItem(t);
         }
     }
 

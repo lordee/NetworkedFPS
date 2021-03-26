@@ -1,4 +1,4 @@
-[gd_scene load_steps=13 format=2]
+[gd_scene load_steps=14 format=2]
 
 [ext_resource path="res://Scripts/Main.cs" type="Script" id=1]
 [ext_resource path="res://Scripts/Network.cs" type="Script" id=2]
@@ -12,6 +12,7 @@
 [ext_resource path="res://Scenes/UI/HUD.tscn" type="PackedScene" id=10]
 [ext_resource path="res://Scripts/Binds/Bindings.cs" type="Script" id=11]
 [ext_resource path="res://Scripts/SoundManager.cs" type="Script" id=12]
+[ext_resource path="res://share/Scripts/EntityManager.cs" type="Script" id=13]
 
 [node name="Main" type="Node"]
 script = ExtResource( 1 )
@@ -26,6 +27,9 @@ script = ExtResource( 3 )
 script = ExtResource( 4 )
 
 [node name="Players" type="Node" parent="World"]
+
+[node name="EntityManager" type="Node" parent="World"]
+script = ExtResource( 13 )
 
 [node name="UIManager" type="Node" parent="."]
 script = ExtResource( 5 )

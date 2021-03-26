@@ -42,8 +42,6 @@ lastspawn_team2 = nil;
 function ProcessEntity(entity)
     BPrint("Processing entity ", entity.NetName);
     entity.Fields.team_no = tonumber(entity.MapFields.team_no);
-    entity.CollisionSeen = 4;
-    entity.CollisionSee = 4;
 end
 
 function info_player_teamspawn (entity)
@@ -78,14 +76,14 @@ function FireRocket (shooter)
     BSound(shooter.Origin, "shots/rocket.wav");
     
     -- TODO - use scenes for now? but then do we need bsound etc?
-    local ent = Spawn("resourcename");
+    local ent = Spawn("Weapons/Rocket.tscn");
     ent.Owner = shooter;
     ent.MoveType = MOVETYPE.MISSILE;
     ent.GlobalTransform = shooter.GlobalTransform;
-    ent.Velocity = 90;
+    ent.MoveSpeed = 90;
     ent.Touch = "RocketTouch";
     ent.NextThink = Time() + 5;
-    ent.Think = "Remove";
+    ent.Think = "RemoveEnt";
     ent.ClassName = "proj_rocket";
 
     ent.Fields.Weapon = WEAPON.ROCKET;
@@ -93,6 +91,17 @@ function FireRocket (shooter)
 
 end
 
+function RemoveEnt (entity)
+    Remove(entity);
+end
+
+function RocketTouch (entity, other)
+    local touched = "world";
+    if (other != nil) then
+        touched = other.NetName;
+    end
+    BPrint(entity.NetName, "'s rocket touched ", touched);
+end
 
 -- FIXME - identify endless loops in lua somehow
 -- FIXME - could result in unending loop if spawn does not exist?  Might be fixed

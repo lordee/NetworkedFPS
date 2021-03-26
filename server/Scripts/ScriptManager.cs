@@ -49,6 +49,7 @@ public class ScriptManager : Node
         // c# types to pass
         UserData.RegisterType<Player>();
         UserData.RegisterType<Godot.Vector3>();
+        UserData.RegisterType<Godot.Transform>();
         UserData.RegisterType<Entity>();
 
         DynValue extensions = ScriptServer.Globals.Get("FieldExtensions");
@@ -73,6 +74,8 @@ public class ScriptManager : Node
         ScriptServer.Globals["Find"] = (Func<Entity, string, string, Entity>)Builtins.Find;
         ScriptServer.Globals["Time"] = (Func<float>)Builtins.Time;
         ScriptServer.Globals["BSound"] = (Action<Vector3, string>)Builtins.BSound;
+        ScriptServer.Globals["Remove"] = (Action<Entity>)Builtins.Remove;
+        ScriptServer.Globals["Spawn"] = (Func<string, Entity>)Builtins.Spawn;
     }
 
     // Player
@@ -102,9 +105,26 @@ public class ScriptManager : Node
         ScriptServer.Call(luaPlayerSpawn, player);
     }
 
-    public void PlayerAttack(Player player)
+    // Entities
+    public void EntityTouch(Entity entity, KinematicCollision collision)
     {
-        
+        if (entity.Touch != null)
+        {
+            Entity other = null;
+            if (collision.Collider is EntityNode en)
+            {
+                other = en.Entity;
+            }
+            ScriptServer.Call(entity.Touch, entity, other);
+        }
+    }
+
+    public void EntityThink(Entity entity)
+    {
+        if (entity.Think != null)
+        {
+            ScriptServer.Call(entity.Think, entity);
+        }
     }
 
     // World

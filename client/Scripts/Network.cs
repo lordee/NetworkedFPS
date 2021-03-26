@@ -152,8 +152,7 @@ public class Network : Node
         if(GetTree().GetNetworkUniqueId() == c.NetworkID)
         {
             Main.Client = c;
-            PlayerController pc = PlayerController.Instance();
-            pc.Attach(p);
+            Main.PlayerController.Attach(p);
             UIManager.LoadHUD(p.Player);
         }
     }
@@ -163,10 +162,6 @@ public class Network : Node
     {
         Main.World.ChangeMap(mapName);
         PlayerController pc = Main.PlayerController;
-        if (pc == null)
-        {
-            pc = PlayerController.Instance();
-        }
         PlayerNode p = Main.Client.Player.PlayerNode;
         pc.Attach(p);
     }
@@ -210,11 +205,7 @@ public class Network : Node
                 case PACKETTYPE.PRINT:
 
                     break;
-                case PACKETTYPE.PRINT_HIGH:
-                    string val = split[i];
-                    Console.Print(val);
-                    HUD.Print(val);
-                    break;
+                
             }
         }        
     }
@@ -265,8 +256,16 @@ public class Network : Node
                     string res = split[i];
                     res = Util.GetResourceString(res, RESOURCE.SOUND);
         
-                    
                     Main.SoundManager.Sound3D(org, res);
+                    break;
+                case PACKETTYPE.PRINT_HIGH:
+                    string val = split[i];
+                    Console.Print(val);
+                    HUD.Print(val);
+                    break;
+                case PACKETTYPE.REMOVE:
+                    string nodeName = split[i];
+                    Main.World.EntityManager.RemoveEntity(Main.World.EntityManager.GetEntityByNodeName(nodeName));
                     break;
             }
         }        

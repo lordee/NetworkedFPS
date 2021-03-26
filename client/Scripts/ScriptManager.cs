@@ -27,9 +27,15 @@ public class ScriptManager : Node
         
     }
 
-    public void PlayerAttack(Player player)
+    // Entities
+    public void EntityTouch(Entity entity, KinematicCollision collision)
     {
-        
+
+    }
+
+    public void EntityThink(Entity entity)
+    {
+
     }
 
     // world

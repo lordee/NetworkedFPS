@@ -6,19 +6,25 @@ using MoonSharp.Interpreter;
 public class Player : Entity
 {
     public Client ClientOwner;
-    [MoonSharpHidden]
-    public PlayerNode PlayerNode;
 
-    private Vector3 _origin;
+    private PlayerNode _playerNode;
+    [MoonSharpHidden]
+    public PlayerNode PlayerNode {
+        get { return _playerNode; }
+        set { 
+            _playerNode = value;
+            EntityNode = value;
+            }
+    }
+
     new public Vector3 Origin { 
         get {
-            return _origin;
+            return PlayerNode.GlobalTransform.origin;
         }
         set {
             Transform t = PlayerNode.GlobalTransform;
             t.origin = value;
             PlayerNode.GlobalTransform = t;
-            _origin = value;
 
             if (Main.Network.IsNetworkMaster())
             {
@@ -32,7 +38,6 @@ public class Player : Entity
     public int NetworkID;
     
     public bool WishJump = false;
-    public float MoveSpeed = 32;
     private float _moveScale = 1f;
     private float _airAcceleration = 2.0f;          // Air accel
     private float _airDecceleration = 2.0f;         // Deacceleration experienced when opposite strafing
@@ -41,13 +46,10 @@ public class Player : Entity
     private float _jumpSpeed = 27.0f;                // The speed at which the character's up axis gains when hitting jump
     private float _maxStairAngle = 20f;
     private float _stairJumpHeight = 9F;
-    public float Acceleration = 14.0f;
-    public float Deceleration = 10.0f;
-
-    public bool TouchingGround = false;
+    
+    
     public bool OnLadder = false;
-    public MOVETYPE MoveType = MOVETYPE.STEP;
-    public Vector3 Velocity;
+    
     public float CurrentHealth = 100;
     public float CurrentArmour = 0;
     public float TimeDead = 0;
@@ -66,6 +68,8 @@ public class Player : Entity
         NetworkID = ClientOwner.NetworkID;
         NetName = NetworkID.ToString();
         ClassName = "player";
+        MoveType = MOVETYPE.STEP;
+        MoveSpeed = 32;
     }
 
     public void Frame(float delta)
@@ -124,7 +128,6 @@ public class Player : Entity
         if (Main.Network.IsNetworkMaster())
         {
             SetServerState(PlayerNode.GlobalTransform.origin, Velocity, PlayerNode.Rotation, CurrentHealth, CurrentArmour);
-            _origin = PlayerNode.GlobalTransform.origin;
         }
         else
         {
@@ -168,11 +171,6 @@ public class Player : Entity
                 return;
             }
             Main.World.RewindPlayers(diff, delta);
-        }
-
-        if (pCmd.attack == 1)
-        {
-            Main.ScriptManager.PlayerAttack(this);
         }
 
         Main.World.FastForwardPlayers();
