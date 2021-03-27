@@ -5,6 +5,9 @@ using System.Linq;
 
 public class Entity
 {
+    [MoonSharpHidden]
+    public int EntityID;
+
     public EntityNode EntityNode;
     public Entity Owner {
         get {
@@ -54,20 +57,22 @@ public class Entity
     public float Acceleration = 14.0f;
     public float Deceleration = 10.0f;
     
-    private DynValue _touch;
+    [MoonSharpHidden]
+    public DynValue TouchFunc;
     public string Touch {
-        get { return _touch.String; }
+        get { return TouchFunc.String; }
         set {
-            _touch = ScriptManager.ScriptServer.Globals.Get(value);
+            TouchFunc = ScriptManager.ScriptServer.Globals.Get(value);
         }
     }
 
     public float NextThink = 0;
-    private DynValue _think;
+    [MoonSharpHidden]
+    public DynValue ThinkFunc;
     public string Think {
-        get { return _think.String; }
+        get { return ThinkFunc.String; }
         set {
-            _think = ScriptManager.ScriptServer.Globals.Get(value);
+            ThinkFunc = ScriptManager.ScriptServer.Globals.Get(value);
         }
     }
 
@@ -81,6 +86,7 @@ public class Entity
         if (Main.Network.IsNetworkMaster())
         {
             Fields = Fields2;
+            EntityID = Main.World.EntityManager.GetEntityID();
         }
     }
 }

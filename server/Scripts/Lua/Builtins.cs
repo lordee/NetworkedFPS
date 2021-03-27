@@ -67,7 +67,13 @@ static public class Builtins
 
     static public Entity Spawn(string sceneName)
     {
-        return Main.World.EntityManager.Spawn(sceneName);
+        Entity ent = Main.World.EntityManager.Spawn(sceneName);
+        sb.Clear();
+        sb.Append(sceneName);
+        sb.Append(",");
+        sb.Append(ent.EntityID);
+        BroadcastUnreliable(PACKETTYPE.SPAWN, sb.ToString());
+        return ent;
     }
 
     static public Entity Find(Entity entity, string fieldName, string fieldValue)

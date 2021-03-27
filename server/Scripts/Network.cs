@@ -121,6 +121,11 @@ public class Network : Node
     private string BuildUnreliablePacketString(List<PacketSnippet> packets)
     {
         sb.Clear();
+        if (packets.Count == 0)
+        {
+            return sb.ToString();
+        }
+
         sb.Append(Main.World.ServerSnapshot);
         sb.Append(",");
         
@@ -133,13 +138,8 @@ public class Network : Node
             sb.Append(",");
             sb.Append(packet.Value);
             sb.Append(",");
-            sb.Append(PACKET.END);
-            sb.Append(",");
         }
-        if (packets.Count > 0)
-        {
-            sb.Remove(sb.Length - 1, 1);
-        }
+        sb.Append(PACKET.END);
 
         return sb.ToString();
     }

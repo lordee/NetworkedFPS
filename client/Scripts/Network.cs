@@ -248,7 +248,6 @@ public class Network : Node
             {
                 case PACKETTYPE.BSOUND:
                     // TODO - sound manager, nodes from precache in script so no node creation
-                    
                     Vector3 org = new Vector3();
                     org.x = float.Parse(split[i++]);
                     org.y = float.Parse(split[i++]);
@@ -266,6 +265,11 @@ public class Network : Node
                 case PACKETTYPE.REMOVE:
                     string nodeName = split[i];
                     Main.World.EntityManager.RemoveEntity(Main.World.EntityManager.GetEntityByNodeName(nodeName));
+                    break;
+                case PACKETTYPE.SPAWN:
+                    string sceneName = split[i++];
+                    int entID = int.Parse(split[i]);
+                    Main.World.EntityManager.SpawnWithID(sceneName, entID);
                     break;
             }
         }        

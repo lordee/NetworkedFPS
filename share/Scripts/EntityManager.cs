@@ -6,7 +6,7 @@ using System.Linq;
 
 public class EntityManager : Node
 {
-
+    private int _entityCount = 0;
     // FIXME - replace with entity manager node
     public List<Entity> Entities = new List<Entity>();
     public List<Entity> RemoveEntityQueue = new List<Entity>();
@@ -70,5 +70,16 @@ public class EntityManager : Node
         Entities.Add(en.Entity);
 
         return en.Entity;
+    }
+
+    public int GetEntityID()
+    {
+        return _entityCount++;
+    }
+
+    public void SpawnWithID(string sceneName, int entID)
+    {
+        Entity ent = Spawn(sceneName);
+        ent.EntityID = entID;
     }
 }

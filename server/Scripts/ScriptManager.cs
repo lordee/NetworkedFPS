@@ -108,22 +108,22 @@ public class ScriptManager : Node
     // Entities
     public void EntityTouch(Entity entity, KinematicCollision collision)
     {
-        if (entity.Touch != null)
+        if (entity.TouchFunc != null)
         {
             Entity other = null;
             if (collision.Collider is EntityNode en)
             {
                 other = en.Entity;
             }
-            ScriptServer.Call(entity.Touch, entity, other);
+            ScriptServer.Call(entity.TouchFunc, entity, other);
         }
     }
 
     public void EntityThink(Entity entity)
     {
-        if (entity.Think != null)
+        if (entity.ThinkFunc != null)
         {
-            ScriptServer.Call(entity.Think, entity);
+            ScriptServer.Call(entity.ThinkFunc, entity);
         }
     }
 
