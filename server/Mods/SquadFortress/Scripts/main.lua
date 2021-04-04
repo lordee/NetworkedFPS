@@ -100,7 +100,8 @@ function RocketTouch (entity, other)
     if (other != nil) then
         touched = other.NetName;
     end
-    BPrint(entity.NetName, "'s rocket touched ", touched);
+    BPrint(entity.Owner.NetName, "'s rocket touched ", touched, " at ", entity.Origin);
+    RemoveEnt(entity);
 end
 
 -- FIXME - identify endless loops in lua somehow

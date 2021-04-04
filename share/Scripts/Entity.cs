@@ -2,45 +2,79 @@ using System.Collections.Generic;
 using MoonSharp.Interpreter;
 using Godot;
 using System.Linq;
+using System;
 
 public class Entity
 {
     [MoonSharpHidden]
-    public int EntityID;
-
+    public UInt16 EntityID;
+    [MoonSharpHidden]
     public EntityNode EntityNode;
+
+    
+
+    // default fields that engine needs, modified by options etc
+
+    [MoonSharpHidden]
+    public Dictionary<int, int> EntityChanges = new Dictionary<int, int>();
+    
+    [MoonSharpHidden]
+    private Entity _owner;
     public Entity Owner {
         get {
-            return EntityNode.Entity;
+            return _owner;
         }
         set {
-            EntityNode.RemoveCollisionExceptionWith(Owner.EntityNode);
-            EntityNode.AddCollisionExceptionWith(value.EntityNode);
+            if (_owner != value)
+            {
+                if (_owner != null)
+                {
+                    EntityNode.RemoveCollisionExceptionWith(_owner.EntityNode);
+                }
+                
+                EntityNode.AddCollisionExceptionWith(value.EntityNode);
+                _owner = value;
+            }
         }
     }
     
-    // default fields that engine needs, modified by options etc
     public string NetName { get; set; }
     public string ClassName { get; set; }
     public MoonSharp.Interpreter.Table Fields;
 
     public MOVETYPE MoveType = MOVETYPE.NONE;
-    public float MoveSpeed = 0;
+
+    public float MoveSpeed;
     public Vector3 Velocity;
 
     public uint CollisionLayer {
         get { return EntityNode.CollisionLayer; }
-        set { EntityNode.CollisionLayer = value; }
+        set { 
+            if (EntityNode.CollisionLayer != value)
+            {
+                EntityNode.CollisionLayer = value;
+            }
+        }
     }
 
     public uint CollisionMask {
         get { return EntityNode.CollisionMask; }
-        set { EntityNode.CollisionMask = value; }
+        set { 
+            if (EntityNode.CollisionMask != value)
+            {
+                EntityNode.CollisionMask = value;
+            } 
+        }
     }
 
     public Transform GlobalTransform {
         get { return EntityNode.GlobalTransform; }
-        set { EntityNode.GlobalTransform = value; }
+        set { 
+            if (EntityNode.GlobalTransform != value)
+            {
+                EntityNode.GlobalTransform = value;
+            }
+        }
     }
 
     public Vector3 Origin { 

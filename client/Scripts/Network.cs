@@ -54,86 +54,36 @@ public class Network : Node
 
     public void SendPMovement(int RecID, int id, List<PlayerCmd> pCmdQueue)
     {       
-        string packetString = BuildClientCmdPacket(id, pCmdQueue);
-        byte[] packetBytes = Encoding.UTF8.GetBytes(packetString);
+        byte[] packetBytes = BuildClientCmdPacket(id, pCmdQueue);
 
         RpcUnreliableId(RecID, nameof(ReceivePMovementServer), packetBytes);
     }
 
-    private string BuildClientCmdPacket(int id, List<PlayerCmd> pCmdQueue)
+    private byte[] BuildClientCmdPacket(int id, List<PlayerCmd> pCmdQueue)
     {
-        sb.Clear();
-        sb.Append(Main.World.LocalSnapshot);
-        sb.Append(",");
-        sb.Append(id.ToString());
-        sb.Append(",");
+        List<byte> packet = new List<byte>();
+        Util.AppendIntBytes(ref packet, PACKET.PLAYERID, id);
+        Util.AppendIntBytes(ref packet, PACKET.SNAPSHOT, Main.World.ServerSnapshot);
+
+        // FIXME - eventually we want to do this properly with bits
         foreach(PlayerCmd pCmd in pCmdQueue)
         {
-            sb.Append(PACKET.HEADER);
-            sb.Append(",");
-            sb.Append(pCmd.snapshot);
-            sb.Append(",");
-            sb.Append(pCmd.move_forward);
-            sb.Append(",");
-            sb.Append(pCmd.move_right);
-            sb.Append(",");
-            sb.Append(pCmd.move_up);
-            sb.Append(",");
-            sb.Append(pCmd.aim.x.x);
-            sb.Append(",");
-            sb.Append(pCmd.aim.x.y);
-            sb.Append(",");
-            sb.Append(pCmd.aim.x.z);
-            sb.Append(",");
-            sb.Append(pCmd.aim.y.x);
-            sb.Append(",");
-            sb.Append(pCmd.aim.y.y);
-            sb.Append(",");
-            sb.Append(pCmd.aim.y.z);
-            sb.Append(",");
-            sb.Append(pCmd.aim.z.x);
-            sb.Append(",");
-            sb.Append(pCmd.aim.z.y);
-            sb.Append(",");
-            sb.Append(pCmd.aim.z.z);
-            sb.Append(",");
-            sb.Append(pCmd.cam_angle);
-            sb.Append(",");
-            sb.Append(pCmd.rotation.x);
-            sb.Append(",");
-            sb.Append(pCmd.rotation.y);
-            sb.Append(",");
-            sb.Append(pCmd.rotation.z);
-            sb.Append(",");
-            sb.Append(pCmd.attack);
-            sb.Append(",");
-            sb.Append("\"" + pCmd.projName + "\"");
-            sb.Append(",");
-            sb.Append(pCmd.attackDir.x);
-            sb.Append(",");
-            sb.Append(pCmd.attackDir.y);
-            sb.Append(",");
-            sb.Append(pCmd.attackDir.z);
-            sb.Append(",");
+            Util.AppendIntBytes(ref packet, PACKET.PCMDSNAPSHOT, pCmd.snapshot);
+            Util.AppendFloatBytes(ref packet, PACKET.PCMDFORWARD, pCmd.move_forward);
+            Util.AppendFloatBytes(ref packet, PACKET.PCMDUP, pCmd.move_up);
+            Util.AppendFloatBytes(ref packet, PACKET.PCMDRIGHT, pCmd.move_right);
+            Util.AppendVectorBytes(ref packet, PACKET.BASISX, pCmd.basis.x);
+            Util.AppendVectorBytes(ref packet, PACKET.BASISY, pCmd.basis.y);
+            Util.AppendVectorBytes(ref packet, PACKET.BASISZ, pCmd.basis.z);
+            Util.AppendFloatBytes(ref packet, PACKET.PCMDCAMANGLE, pCmd.cam_angle); // FIXME - needed?
+            Util.AppendIntBytes(ref packet, PACKET.PCMDATTACK, pCmd.attack);
 
-            if (pCmd.impulses.Count > 0)
+            foreach(float imp in pCmd.impulses)
             {
-                sb.Append(PACKET.IMPULSE);
-                sb.Append(",");
-                foreach(float imp in pCmd.impulses)
-                {
-                    sb.Append(imp);
-                    sb.Append(",");
-                }
+                Util.AppendFloatBytes(ref packet, PACKET.IMPULSE, imp);
             }
-            sb.Append(PACKET.END);
-            sb.Append(",");
         }
-        if (pCmdQueue.Count > 0)
-        {
-            sb.Remove(sb.Length - 1, 1);
-        }
-        return sb.ToString();
+        return packet.ToArray();
     }
 
     [Slave]
@@ -169,192 +119,190 @@ public class Network : Node
     [Slave]
     public void ReceiveReliablePacket(byte[] packet)
     {
-        string pkStr = Encoding.UTF8.GetString(packet);
-        string[] split = pkStr.Split(",");
-        int snapNum = Convert.ToInt32(split[0]);
+        // not sure we need separate methods actually as channels are handled by enet...
+        ReceiveUnreliablePacket(packet);
+    }
 
-        PACKETSTATE pState = PACKETSTATE.UNINITIALISED;
-        for (int i = 1; i < split.Length; i++)
+    private void PacketBSound(byte[] packet)
+    {
+        Vector3 org = Util.ReadV3(packet);
+        string res = BitConverter.ToString(packet, sizeof(float)*3);
+        res = Util.GetResourceString(res, RESOURCE.SOUND);
+
+        Main.SoundManager.Sound3D(org, res);
+    }
+
+    private void PacketRemove(byte[] packet)
+    {
+        UInt16 id = BitConverter.ToUInt16(packet, 0);
+        Main.World.EntityManager.RemoveEntity(Main.World.EntityManager.GetEntityByID(id));
+    }
+
+    private void PacketEntity(byte[] val, byte[] packet, ref int i)
+    {
+        UInt16 id = BitConverter.ToUInt16(val, 0);
+        Entity ent = Main.World.EntityManager.Entities.Find(e => e.EntityID == id);
+        bool process = true;
+        Transform t = new Transform();
+        if (ent == null)
         {
-            switch(split[i])
-            {
-                case PACKET.HEADER:
-                    pState = PACKETSTATE.HEADER;
-                    i++;
-                    break;
-                case PACKET.END:
-                    pState = PACKETSTATE.END;
-                    break;
-            }
+            //FIXME - spawn not received yet, hold packet?
+            process = false;
+        }
+        else
+        {
+            t = ent.EntityNode.Transform;
+        }
+        PACKET type = PACKET.NONE;
         
-            PACKETTYPE type = PACKETTYPE.NONE;
-            switch (pState)
+        bool entPacket = true;
+        while (entPacket && i < packet.Length)
+        {
+            val = Util.GetNextPacketBytes(packet, ref type, ref i);
+            if (type == PACKET.ENTITYID)
             {
-                case PACKETSTATE.UNINITIALISED:
-                    GD.Print("PACKETSTATE.UNINITIALISED");
-                    break;
-                case PACKETSTATE.HEADER:
-                    type = (PACKETTYPE)Convert.ToInt32(split[i++]);
-                    break;
-                case PACKETSTATE.END:
-                    return;
+                entPacket = false;
             }
-
-            switch (type)
+            if (process)
             {
-                case PACKETTYPE.PRINT:
-
-                    break;
-                
+                switch (type)
+                {
+                    case PACKET.OWNERID:
+                        UInt16 ownerID = BitConverter.ToUInt16(val, 0);
+                        Entity owner = Main.World.EntityManager.Entities.Find(e2 => e2.EntityID == ownerID);
+                        ent.Owner = owner;
+                        break;
+                    case PACKET.MOVETYPE:
+                        ent.MoveType = (MOVETYPE)BitConverter.ToUInt16(val, 0);
+                        break;
+                    case PACKET.MOVESPEED:
+                        ent.MoveSpeed = BitConverter.ToSingle(val, 0);
+                        break;
+                    case PACKET.VELOCITY:
+                        ent.Velocity = Util.ReadV3(val);
+                        break;
+                    case PACKET.COLLISIONLAYER:
+                        ent.CollisionLayer = BitConverter.ToUInt32(val, 0);
+                        break;
+                    case PACKET.COLLISIONMASK:
+                        ent.CollisionMask = BitConverter.ToUInt32(val, 0);
+                        break;
+                    case PACKET.BASISX:
+                        t.basis.x = Util.ReadV3(val);
+                        break;
+                    case PACKET.BASISY:
+                        t.basis.y = Util.ReadV3(val);
+                        break;
+                    case PACKET.BASISZ:
+                        t.basis.z = Util.ReadV3(val);
+                        break;
+                    case PACKET.ORIGIN:
+                        t.origin = Util.ReadV3(val);
+                        break;
+                    default:
+                        entPacket = false;
+                        break;
+                }
             }
-        }        
+            
+        }
+        if (ent != null && t != ent.EntityNode.GlobalTransform)
+        {
+            ent.EntityNode.GlobalTransform = t;
+        }
     }
 
     [Slave]
     public void ReceiveUnreliablePacket(byte[] packet)
     {
-        string pkStr = Encoding.UTF8.GetString(packet);
-        string[] split = pkStr.Split(",");
-        int snapNum = Convert.ToInt32(split[0]);
+        int i = 0;
+        PACKET type = PACKET.NONE;
+        byte[] val = Util.GetNextPacketBytes(packet, ref type, ref i);
+        Main.World.ServerSnapshot = BitConverter.ToInt32(val, 0);
 
-        PACKETSTATE pState = PACKETSTATE.UNINITIALISED;
-        for (int i = 1; i < split.Length; i++)
+        while (i < packet.Length)
         {
-            switch(split[i])
-            {
-                case PACKET.HEADER:
-                    pState = PACKETSTATE.HEADER;
-                    i++;
-                    break;
-                case PACKET.END:
-                    pState = PACKETSTATE.END;
-                    break;
-            }
-        
-            PACKETTYPE type = PACKETTYPE.NONE;
-            switch (pState)
-            {
-                case PACKETSTATE.UNINITIALISED:
-                    GD.Print("PACKETSTATE.UNINITIALISED");
-                    break;
-                case PACKETSTATE.HEADER:
-                    type = (PACKETTYPE)Convert.ToInt32(split[i++]);
-                    break;
-                case PACKETSTATE.END:
-                    return;
-            }
+            type = PACKET.NONE;
+            val = Util.GetNextPacketBytes(packet, ref type, ref i);
 
-            switch (type)
-            {
-                case PACKETTYPE.BSOUND:
-                    // TODO - sound manager, nodes from precache in script so no node creation
-                    Vector3 org = new Vector3();
-                    org.x = float.Parse(split[i++]);
-                    org.y = float.Parse(split[i++]);
-                    org.z = float.Parse(split[i++]);
-                    string res = split[i];
-                    res = Util.GetResourceString(res, RESOURCE.SOUND);
-        
-                    Main.SoundManager.Sound3D(org, res);
-                    break;
-                case PACKETTYPE.PRINT_HIGH:
-                    string val = split[i];
-                    Console.Print(val);
-                    HUD.Print(val);
-                    break;
-                case PACKETTYPE.REMOVE:
-                    string nodeName = split[i];
-                    Main.World.EntityManager.RemoveEntity(Main.World.EntityManager.GetEntityByNodeName(nodeName));
-                    break;
-                case PACKETTYPE.SPAWN:
-                    string sceneName = split[i++];
-                    int entID = int.Parse(split[i]);
-                    Main.World.EntityManager.SpawnWithID(sceneName, entID);
-                    break;
-            }
-        }        
-    }
-
-    [Slave]
-    public void ReceivePacket(byte[] packet)
-    {
-        string pkStr = Encoding.UTF8.GetString(packet);
-        string[] split = pkStr.Split(",");
-        int snapNum = Convert.ToInt32(split[0]);
-        Main.World.ServerSnapshot = snapNum;
-
-        for (int i = 1; i < split.Length; i++)
-        {
-            PACKETTYPE type = (PACKETTYPE)Convert.ToInt32(split[i++]);
             switch(type)
             {
-                case PACKETTYPE.PLAYER:
-                    ProcessPlayerPacket(split, ref i);
+                case PACKET.BSOUND:
+                    // TODO - sound manager, nodes from precache in script so no node creation
+                    PacketBSound(val);
                     break;
-                case PACKETTYPE.PROJECTILE:
-                    //ProcessProjectilePacket(split, ref i);
+                case PACKET.PRINT_HIGH:
+                    string msg = BitConverter.ToString(val);
+                    Console.Print(msg);
+                    HUD.Print(msg);
+                    break;
+                case PACKET.SPAWN:
+                    UInt16 entID = BitConverter.ToUInt16(val, 0);
+                    string sceneName = BitConverter.ToString(val, sizeof(UInt16));
+                    
+                    Main.World.EntityManager.SpawnWithID(sceneName, entID);
+                    break;
+                case PACKET.PLAYERID:
+                    int id = BitConverter.ToInt32(val, 0);
+                    float ping = -1;
+                    float health = -1;
+                    float armour = -1;
+                    Vector3 org = new Vector3();
+                    Vector3 vel = new Vector3();
+                    Vector3 rot = new Vector3();
+                    bool playerpacket = true;
+                    while (playerpacket)
+                    {
+                        val = Util.GetNextPacketBytes(packet, ref type, ref i);
+                        switch (type)
+                        {
+                            case PACKET.PING:
+                                ping = BitConverter.ToSingle(val, 0);
+                                break;
+                            case PACKET.HEALTH:
+                                health = BitConverter.ToSingle(val, 0);
+                                break;
+                            case PACKET.ARMOUR:
+                                armour = BitConverter.ToSingle(val, 0);
+                                break;
+                            case PACKET.ORIGIN:
+                                org = Util.ReadV3(val);
+                                break;
+                            case PACKET.VELOCITY:
+                                vel = Util.ReadV3(val);
+                                break;
+                            case PACKET.ROTATION:
+                                rot = Util.ReadV3(val);
+                                break;
+                            default:
+                                playerpacket = false;
+                                break;
+                        }
+                    }
+
+                    UpdatePlayer(id, ping, health, armour, org, vel, rot);
+                    break;
+                case PACKET.ENTITYID:
+                    PacketEntity(val, packet, ref i);
+                    break;
+                case PACKET.REMOVE:
+                    PacketRemove(val);
                     break;
             }
         }
+
         Main.World.LocalSnapshot = Main.World.LocalSnapshot < Main.World.ServerSnapshot ? Main.World.ServerSnapshot : Main.World.LocalSnapshot;
-    }
-/*
-    private void ProcessProjectilePacket(string[] split, ref int i)
-    {
-        string pName = split[i++];
-        string pID = split[i++];
-        WEAPONTYPE weapon = (WEAPONTYPE)Convert.ToInt16(split[i++]);
-        Vector3 porg = new Vector3(
-            float.Parse(split[i++],  System.Globalization.CultureInfo.InvariantCulture)
-            , float.Parse(split[i++],  System.Globalization.CultureInfo.InvariantCulture)
-            , float.Parse(split[i++],  System.Globalization.CultureInfo.InvariantCulture)
-        );
-        Vector3 pvel = new Vector3(
-            float.Parse(split[i++],  System.Globalization.CultureInfo.InvariantCulture)
-            , float.Parse(split[i++],  System.Globalization.CultureInfo.InvariantCulture)
-            , float.Parse(split[i++],  System.Globalization.CultureInfo.InvariantCulture)
-        );
-
-        Vector3 prot = new Vector3(
-            float.Parse(split[i++],  System.Globalization.CultureInfo.InvariantCulture)
-            , float.Parse(split[i++],  System.Globalization.CultureInfo.InvariantCulture)
-            , float.Parse(split[i],  System.Globalization.CultureInfo.InvariantCulture)
-        );
-        _game.World.ProjectileManager.AddNetworkedProjectile(pName, pID, porg, pvel, prot, weapon);
-    }*/
-
-    private void ProcessPlayerPacket(string[] split, ref int i)
-    {
-        int id = Convert.ToInt32(split[i++]);
-        float ping = float.Parse(split[i++]);
-        int health = Convert.ToInt32(split[i++]);
-        int armour = Convert.ToInt32(split[i++]);
-        Vector3 org = new Vector3(
-            float.Parse(split[i++],  System.Globalization.CultureInfo.InvariantCulture)
-            , float.Parse(split[i++],  System.Globalization.CultureInfo.InvariantCulture)
-            , float.Parse(split[i++],  System.Globalization.CultureInfo.InvariantCulture)
-        );
-        Vector3 vel = new Vector3(
-            float.Parse(split[i++],  System.Globalization.CultureInfo.InvariantCulture)
-            , float.Parse(split[i++],  System.Globalization.CultureInfo.InvariantCulture)
-            , float.Parse(split[i++],  System.Globalization.CultureInfo.InvariantCulture)
-        );
-
-        Vector3 rot = new Vector3(
-            float.Parse(split[i++],  System.Globalization.CultureInfo.InvariantCulture)
-            , float.Parse(split[i++],  System.Globalization.CultureInfo.InvariantCulture)
-            , float.Parse(split[i++],  System.Globalization.CultureInfo.InvariantCulture)
-        );
-
-        UpdatePlayer(id, ping, health, armour, org, vel, rot);
     }
 
     public void UpdatePlayer(int id, float ping, float health, float armour, Vector3 org, Vector3 velo
         , Vector3 rot)
     {
-        Client c = Clients.Where(p2 => p2.NetworkID == id).First();
-        c.Ping = ping;
-        c.Player.SetServerState(org, velo, rot, health, armour);
+        Client c = Clients.Where(p2 => p2.NetworkID == id).FirstOrDefault();
+        if (c != null)
+        {
+            c.Ping = ping;
+            c.Player.SetServerState(org, velo, rot, health, armour);
+        }
     }
 
     // STUBS

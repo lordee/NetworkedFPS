@@ -65,13 +65,10 @@ public class PlayerController : Camera
         pCmd.move_forward = move_forward;
         pCmd.move_right = move_right;
         pCmd.move_up = move_up;
-        pCmd.aim = this.GlobalTransform.basis;
+        pCmd.basis = this.GlobalTransform.basis;
         pCmd.cam_angle = _cameraAngle;
         // FIXME - basis.z.angleto(up vector) instead of rotation value
-        //pCmd.rotation = _player.Mesh.Rotation;
         pCmd.attack = attack;
-        pCmd.attackDir = shootTo;
-        pCmd._projName = "";
         pCmd.impulses = impulses;
         impulses.Clear();
         _playerNode.Player.pCmdQueue.Add(pCmd);

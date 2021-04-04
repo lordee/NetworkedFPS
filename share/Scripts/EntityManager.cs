@@ -3,13 +3,15 @@ using System;
 using System.Collections.Generic;
 using System.Reflection;
 using System.Linq;
+using System.Text;
 
 public class EntityManager : Node
 {
-    private int _entityCount = 0;
+    private UInt16 _entityCount = 0;
     // FIXME - replace with entity manager node
     public List<Entity> Entities = new List<Entity>();
     public List<Entity> RemoveEntityQueue = new List<Entity>();
+    StringBuilder sb = new StringBuilder();
 
     // Called when the node enters the scene tree for the first time.
     public override void _Ready()
@@ -61,6 +63,11 @@ public class EntityManager : Node
         return Entities.Where(e => e.EntityNode.Name == nodeName).FirstOrDefault();
     }
 
+    public Entity GetEntityByID(UInt16 id)
+    {
+        return Entities.Where(e => e.EntityID == id).FirstOrDefault();
+    }
+
     public Entity Spawn(string sceneName)
     {
         PackedScene ps = ResourceLoader.Load(Util.GetResourceString(sceneName, RESOURCE.SCENE)) as PackedScene;
@@ -72,12 +79,14 @@ public class EntityManager : Node
         return en.Entity;
     }
 
-    public int GetEntityID()
+    public UInt16 GetEntityID()
     {
         return _entityCount++;
+
+        // FIXME - cycle through count
     }
 
-    public void SpawnWithID(string sceneName, int entID)
+    public void SpawnWithID(string sceneName, UInt16 entID)
     {
         Entity ent = Spawn(sceneName);
         ent.EntityID = entID;

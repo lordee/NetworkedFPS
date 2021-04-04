@@ -1,4 +1,5 @@
-public enum MOVETYPE
+using System;
+public enum MOVETYPE : UInt16
 {
     NONE = 0,
     MISSILE = 1,
@@ -6,16 +7,38 @@ public enum MOVETYPE
     FLY = 3,
 }
 
-public enum PACKETTYPE // entity type
+public enum PACKET : byte // entity type
 {
     NONE,
-    PLAYER,
-    PROJECTILE,
+    PLAYERID,
+    PING,
+    ROTATION,
+    HEALTH,
+    ARMOUR,
+    ENTITYID,
+    OWNERID,
+    BASISX,
+    BASISY,
+    BASISZ,
+    ORIGIN,
+    VELOCITY,
+    COLLISIONLAYER,
+    COLLISIONMASK,
+    MOVESPEED,
+    MOVETYPE,
     PRINT,
     PRINT_HIGH,
     BSOUND,
     REMOVE,
     SPAWN,
+    SNAPSHOT,
+    PCMDSNAPSHOT,
+    PCMDFORWARD,
+    PCMDUP,
+    PCMDRIGHT,
+    PCMDCAMANGLE,
+    PCMDATTACK,
+    IMPULSE
 }
 
 public enum RESOURCE
@@ -24,21 +47,6 @@ public enum RESOURCE
     SCENE,
     SOUND,
     MAP
-}
-
-public class PACKET
-{
-    public const string IMPULSE = @"\p";
-    public const string HEADER = @"\h";
-    public const string END = @"\e";
-}
-
-public enum PACKETSTATE
-{
-    UNINITIALISED,
-    HEADER,
-    IMPULSE,
-    END,
 }
 
 public enum PSTATE

@@ -32,7 +32,9 @@
     <Compile Include="share\Scripts\State.cs" />
     <Compile Include="share\Scripts\Util.cs" />
     <Compile Include="share\Scripts\EntityNode.cs" />
-    <Compile Include="share\Scripts\ReliablePacket.cs" />
+    <Compile Include="share\Scripts\PacketSnippet.cs" />
+    <Compile Include="share\Scripts\GameState.cs" />
+    <Compile Include="share\Scripts\EntityState.cs" />
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="MoonSharp" Version="2.0.0" />

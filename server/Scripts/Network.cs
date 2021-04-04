@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.IO;
 
 public class Network : Node
 {
@@ -11,6 +12,7 @@ public class Network : Node
 
     public List<Client> Clients = new List<Client>();
     StringBuilder sb = new StringBuilder();
+    StringBuilder sb2 = new StringBuilder();
 
     // Called when the node enters the scene tree for the first time.
     public override void _Ready()
@@ -30,28 +32,23 @@ public class Network : Node
 
     public override void _PhysicsProcess(float delta)
     {
-        // FIXME - culling of info sent based on leaf/cull data
-        string packetString = BuildPacketString();
-        byte[] packetBytes = Encoding.UTF8.GetBytes(packetString);
-        RpcUnreliable(nameof(ReceivePacket), packetBytes);
-
         foreach (Client c in Clients)
         {
-            if (c.ReliablePackets.Count > 0)
+            // FIXME - culling of info sent based on leaf/cull data
+            byte[] packetBytes = BuildUnreliablePacket(c);
+            if (packetBytes.Length > 0)
+            {
+                RpcUnreliableId(c.NetworkID, nameof(ReceiveUnreliablePacket), packetBytes);
+            }
+            
+            // FIXME
+            /*if (c.ReliablePackets.Count > 0)
             {
                 string reliablePacketString = BuildReliablePacketString(c.ReliablePackets);
                 byte[] reliablePacketBytes = Encoding.UTF8.GetBytes(reliablePacketString);
                 RpcId(c.NetworkID, nameof(ReceiveReliablePacket), reliablePacketBytes);
                 c.ReliablePackets.Clear();
-            }
-
-            if (c.UnreliablePackets.Count > 0)
-            {
-                string unreliablePacketString = BuildUnreliablePacketString(c.UnreliablePackets);
-                byte[] unreliablePacketBytes = Encoding.UTF8.GetBytes(unreliablePacketString);
-                RpcUnreliableId(c.NetworkID, nameof(ReceiveUnreliablePacket), unreliablePacketBytes);
-                c.UnreliablePackets.Clear();
-            }
+            }*/
         }
     }
 
@@ -92,43 +89,16 @@ public class Network : Node
     {
         GD.Print("ConnectionRemoved");
     }
-
+/*
     private string BuildReliablePacketString(List<PacketSnippet> packets)
-    {
-        sb.Clear();
-        sb.Append(Main.World.ServerSnapshot);
-        sb.Append(",");
-        foreach (PacketSnippet packet in packets)
-        {
-            packet.SnapNumSent = Main.World.ServerSnapshot;
-            sb.Append(PACKET.HEADER);
-            sb.Append(",");
-            sb.Append((int)packet.Type);
-            sb.Append(",");
-            sb.Append(packet.Value);
-            sb.Append(",");
-            sb.Append(PACKET.END);
-            sb.Append(",");
-        }
-        if (packets.Count > 0)
-        {
-            sb.Remove(sb.Length - 1, 1);
-        }
-
-        return sb.ToString();
-    }
-
-    private string BuildUnreliablePacketString(List<PacketSnippet> packets)
     {
         sb.Clear();
         if (packets.Count == 0)
         {
-            return sb.ToString();
+            return "";
         }
-
         sb.Append(Main.World.ServerSnapshot);
         sb.Append(",");
-        
         foreach (PacketSnippet packet in packets)
         {
             packet.SnapNumSent = Main.World.ServerSnapshot;
@@ -143,171 +113,166 @@ public class Network : Node
 
         return sb.ToString();
     }
+*/
+    
 
-    private string BuildPacketString()
+    private byte[] BuildUnreliablePacket(Client client)
     {
-        sb.Clear();
-        sb.Append(Main.World.ServerSnapshot);
-        sb.Append(",");
+        // FIXME - c# always 32 length??
+        List<byte> packet = new List<byte>();
+        Util.AppendIntBytes(ref packet, PACKET.SNAPSHOT, Main.World.ServerSnapshot);
 
-        // FIXME - only send info within certain distance of clients (non culled players/ents)
-        // players
-        foreach(Client c in Clients)
+        foreach (Client c in Clients)
         {
             if (c.Player == null)
             {
                 continue;
             }
-
-            Vector3 org = c.Player.ServerState.Origin;
-            Vector3 velo = c.Player.ServerState.Velocity;
-            Vector3 rot = c.Player.ServerState.Rotation;
-
-            sb.Append((int)PACKETTYPE.PLAYER);
-            sb.Append(",");
-            sb.Append(c.NetworkID);
-            sb.Append(",");
-            sb.Append(c.Ping);
-            sb.Append(",");
-            sb.Append(c.Player.CurrentHealth);
-            sb.Append(",");
-            sb.Append(c.Player.CurrentArmour);
-            sb.Append(",");
-            sb.Append(org.x);
-            sb.Append(",");
-            sb.Append(org.y);
-            sb.Append(",");
-            sb.Append(org.z);
-            sb.Append(",");
-            sb.Append(velo.x);
-            sb.Append(",");
-            sb.Append(velo.y);
-            sb.Append(",");
-            sb.Append(velo.z);
-            sb.Append(",");
-            sb.Append(rot.x);
-            sb.Append(",");
-            sb.Append(rot.y);
-            sb.Append(","); 
-            sb.Append(rot.z);
-            sb.Append(",");
+            Util.AppendIntBytes(ref packet, PACKET.PLAYERID, c.NetworkID);
+            Util.AppendFloatBytes(ref packet, PACKET.PING, c.Ping);
+            Util.AppendFloatBytes(ref packet, PACKET.HEALTH, c == client ? c.Player.CurrentHealth : 100);
+            Util.AppendFloatBytes(ref packet, PACKET.ARMOUR, c == client ? c.Player.CurrentArmour : 0);
+            Util.AppendVectorBytes(ref packet, PACKET.ORIGIN, c.Player.ServerState.Origin);
+            Util.AppendVectorBytes(ref packet, PACKET.VELOCITY, c.Player.ServerState.Velocity);
+            Util.AppendVectorBytes(ref packet, PACKET.ROTATION, c.Player.ServerState.Rotation);
         }
 
-/*
-        // projectiles
-        foreach(Projectile p in _game.World.ProjectileManager.Projectiles)
+        foreach (PacketSnippet ps in client.UnreliablePackets)
         {
-            sb.Append((int)PACKETTYPE.PROJECTILE);
-            sb.Append(",");
-            sb.Append(p.Name);
-            sb.Append(",");
-            sb.Append(p.PlayerOwner.ID);
-            sb.Append(",");
-            sb.Append((int)p.Weapon);
-            sb.Append(",");
-            sb.Append(p.GlobalTransform.origin.x);
-            sb.Append(",");
-            sb.Append(p.GlobalTransform.origin.y);
-            sb.Append(",");
-            sb.Append(p.GlobalTransform.origin.z);
-            sb.Append(",");
-            sb.Append(p.Velocity.x);
-            sb.Append(",");
-            sb.Append(p.Velocity.y);
-            sb.Append(",");
-            sb.Append(p.Velocity.z);
-            sb.Append(",");
-            sb.Append(p.Rotation.x);
-            sb.Append(",");
-            sb.Append(p.Rotation.y);
-            sb.Append(",");
-            sb.Append(p.Rotation.z);
-            sb.Append(",");
+            if (ps.SnapNumSent == -1)
+            {
+                ps.SnapNumSent = Main.World.ServerSnapshot;
+            }
+            Util.DiffAndAppendBytes(ref packet, true, ps.Type, ps.Value);
         }
-*/
-        if (sb.Length > (Main.World.ServerSnapshot.ToString().Length + 1))
+
+        // FIXME - is this acceptable, or should we retry? Or recategorise to use enet reliables
+        client.UnreliablePackets.Clear();
+
+        GameState currentState = Main.World.GameStates.Last();
+        // get last acked clientstate
+        GameState clientState = new GameState();
+        for (int i = client.GameStates.Count - 1; i >= 0; i--)
         {
-            sb.Remove(sb.Length - 1, 1);
+            clientState = client.GameStates[i];
+            if (clientState.Acked)
+            {
+                break;
+            }
         }
-        return sb.ToString();
+
+        // diff state
+        foreach(EntityState es in currentState.EntityStates)
+        {
+            EntityState ces = clientState.EntityStates.Find(e => e.EntityID == es.EntityID);
+            if (ces == null)
+            {
+                ces = new EntityState();
+            }
+            Util.AppendIntBytes(ref packet, PACKET.ENTITYID, es.EntityID);
+            Util.DiffAndAppendBytes(ref packet, (es.OwnerID == ces.OwnerID), PACKET.OWNERID, es.OwnerID);
+            Basis esb = es.GlobalTransform.basis;
+            Basis cesb = ces.GlobalTransform.basis;
+            Util.DiffAndAppendBytes(ref packet, (esb.x == cesb.x), PACKET.BASISX, esb.x);
+            Util.DiffAndAppendBytes(ref packet, (esb.y == cesb.y), PACKET.BASISY, esb.y);
+            Util.DiffAndAppendBytes(ref packet, (esb.z == cesb.z), PACKET.BASISZ, esb.z);
+            Util.DiffAndAppendBytes(ref packet, (es.GlobalTransform.origin == ces.GlobalTransform.origin), PACKET.ORIGIN, es.GlobalTransform.origin);
+            Util.DiffAndAppendBytes(ref packet, (es.Velocity == ces.Velocity), PACKET.VELOCITY, es.Velocity);
+            Util.DiffAndAppendBytes(ref packet, (es.CollisionLayer == ces.CollisionLayer), PACKET.COLLISIONLAYER, es.CollisionLayer);
+            Util.DiffAndAppendBytes(ref packet, (es.CollisionMask == ces.CollisionMask), PACKET.COLLISIONMASK, es.CollisionMask);
+            Util.DiffAndAppendBytes(ref packet, (es.MoveSpeed == ces.MoveSpeed), PACKET.MOVESPEED, es.MoveSpeed);
+            Util.DiffAndAppendBytes(ref packet, (es.MoveType == ces.MoveType), PACKET.MOVETYPE, (int)es.MoveType);            
+        }
+        client.GameStates.Add(Util.DeepClone(currentState));
+        if (client.GameStates.Count > 32)
+        {
+            client.GameStates.RemoveAt(0);
+        }
+
+        return packet.ToArray();
     }
 
     [Remote]
     public void ReceivePMovementServer(byte[] packet)
     {
-        string pkStr = Encoding.UTF8.GetString(packet);
-        string[] split = pkStr.Split(",");
-
-        int serverSnapNumAck = Convert.ToInt32(split[0]);
-        int id = Convert.ToInt32(split[1]);
-
+        int i = 0;
+        PACKET type = PACKET.NONE;
+        byte[] val = Util.GetNextPacketBytes(packet, ref type, ref i);
+        int id = BitConverter.ToInt32(val, 0);
         Client c = Clients.Where(x => x.NetworkID == id).FirstOrDefault();
         if (c == null)
         {
             return;
         }
+
+        val = Util.GetNextPacketBytes(packet, ref type, ref i);
+        int serverSnapNumAck = BitConverter.ToInt32(val, 0);
+
+        GameState gs = c.GameStates.Find(e => e.SnapShotNumber == serverSnapNumAck);
+        if (gs != null)
+        {
+            gs.Acked = true;
+        }
         c.Ping = (Main.World.ServerSnapshot - serverSnapNumAck) * Main.World.FrameDelta;
 
-        PACKETSTATE pState = PACKETSTATE.UNINITIALISED;
-        PlayerCmd pCmd = new PlayerCmd();
-        for (int i = 2; i < split.Length; i++)
+        PlayerCmd pCmd = null;
+        while (i < packet.Length)
         {
-            switch(split[i])
+            type = PACKET.NONE;
+            val = Util.GetNextPacketBytes(packet, ref type, ref i);
+            
+            switch(type)
             {
-                case PACKET.IMPULSE:
-                    pState = PACKETSTATE.IMPULSE;
-                    i++;
-                    break;
-                case PACKET.HEADER:
+                case PACKET.PCMDSNAPSHOT:
+                    if (pCmd != null)
+                    {
+                        if (pCmd.snapshot > c.LastSnapshot)
+                        {
+                            c.Player.pCmdQueue.Add(pCmd);
+                        }
+                    }
                     pCmd = new PlayerCmd();
-                    pState = PACKETSTATE.HEADER;
-                    i++;
+                    pCmd.snapshot = BitConverter.ToInt32(val, 0);
                     break;
-                case PACKET.END:
-                    pState = PACKETSTATE.END;
+                case PACKET.PCMDFORWARD:
+                    pCmd.move_forward = BitConverter.ToSingle(val, 0);
+                    break;
+                case PACKET.PCMDRIGHT:
+                    pCmd.move_right = BitConverter.ToSingle(val, 0);
+                    break;
+                case PACKET.PCMDUP:
+                    pCmd.move_up = BitConverter.ToSingle(val, 0);
+                    break;
+                case PACKET.BASISX:
+                    pCmd.basis.x = Util.ReadV3(val);
+                    break;
+                case PACKET.BASISY:
+                    pCmd.basis.y = Util.ReadV3(val);
+                    break;
+                case PACKET.BASISZ:
+                    pCmd.basis.z = Util.ReadV3(val);
+                    break;
+                case PACKET.PCMDCAMANGLE:
+                    pCmd.cam_angle = BitConverter.ToSingle(val, 0);
+                    break;
+                case PACKET.PCMDATTACK:
+                    pCmd.attack = BitConverter.ToInt32(val, 0);
+                    break;
+                case PACKET.IMPULSE:
+                    pCmd.impulses.Add(BitConverter.ToSingle(val, 0));
                     break;
             }
-
-            switch (pState)
+        }
+        if (pCmd != null)
+        {
+            if (pCmd.snapshot > c.LastSnapshot)
             {
-                case PACKETSTATE.UNINITIALISED:
-                    GD.Print("PACKETSTATE.UNINITIALISED");
-                    break;
-                case PACKETSTATE.HEADER:
-                    pCmd.playerID = id;
-                    pCmd.snapshot = Int32.Parse(split[i++]);
-                    pCmd.move_forward = float.Parse(split[i++]);
-                    pCmd.move_right = float.Parse(split[i++]);
-                    pCmd.move_up = float.Parse(split[i++]);
-                    pCmd.aim = new Basis(
-                                        new Vector3(float.Parse(split[i++]), float.Parse(split[i++]), float.Parse(split[i++])),
-                                        new Vector3(float.Parse(split[i++]), float.Parse(split[i++]), float.Parse(split[i++])),
-                                        new Vector3(float.Parse(split[i++]), float.Parse(split[i++]), float.Parse(split[i++]))
-                                        );
-                    pCmd.cam_angle = float.Parse(split[i++]);
-                    pCmd.rotation = new Vector3(float.Parse(split[i++]), float.Parse(split[i++]), float.Parse(split[i++]));
-                    pCmd.attack = int.Parse(split[i++]);
-                    pCmd._projName = split[i++];
-                    pCmd.attackDir = new Vector3(float.Parse(split[i++]), float.Parse(split[i++]), float.Parse(split[i]));
-                    break;
-                case PACKETSTATE.IMPULSE:
-                    pCmd.impulses.Add(float.Parse(split[i]));
-                    break;
-                case PACKETSTATE.END:
-                    if (pCmd.snapshot > c.LastSnapshot)
-                    {
-                        c.Player.pCmdQueue.Add(pCmd);
-                    }
-                    break;
-            } 
+                c.Player.pCmdQueue.Add(pCmd);
+            }
         }
     }
 
     // stubs
-    public void ReceivePacket(byte[] packet)
-    {
-        // STUB for clients
-    }
     public void ReceiveUnreliablePacket(byte[] packet)
     {
         // STUB for clients

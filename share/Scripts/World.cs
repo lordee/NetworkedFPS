@@ -26,6 +26,7 @@ public class World : Node
     public float BackRecTime { get { return _backRecTime; }}
 
     public List<Snapshot> Snapshots = new List<Snapshot>();
+    public List<GameState> GameStates = new List<GameState>();
 
     // Called when the node enters the scene tree for the first time.
     public override void _Ready()
@@ -80,6 +81,11 @@ public class World : Node
                 Snapshots.RemoveAt(0);
             }
 
+            // add gamestates
+            // FIXME - server only?
+            GameState gs = new GameState();
+            gs.SnapShotNumber = Main.World.LocalSnapshot;
+
             foreach (Entity entity in EntityManager.Entities)
             {
                 MoveEntity(entity.EntityNode, delta);
@@ -88,20 +94,39 @@ public class World : Node
                 {
                     Main.ScriptManager.EntityThink(entity);
                 }
+
+                EntityState es = new EntityState();
+                es.EntityID = entity.EntityID;
+                if (entity.Owner != null)
+                {
+                    es.OwnerID = entity.Owner.EntityID;
+                }
+                es.GlobalTransform = entity.GlobalTransform;
+                es.MoveType = entity.MoveType;
+                es.MoveSpeed = entity.MoveSpeed;
+                es.CollisionLayer = entity.CollisionLayer;
+                es.CollisionMask = entity.CollisionMask;
+                gs.EntityStates.Add(es);
             }
+
+            GameStates.Add(gs);
+            if (GameStates.Count > 32) // arbitrary
+            {
+                GameStates.RemoveAt(0);
+            }
+            
 
             foreach (Entity entity in EntityManager.RemoveEntityQueue)
             {
-                EntityManager.Entities.Remove(entity);
                 entity.EntityNode.GetParent().RemoveChild(entity.EntityNode);
                 entity.EntityNode.QueueFree();
+                EntityManager.Entities.Remove(entity);
             }
 
             EntityManager.RemoveEntityQueue.Clear();
         }
     }
 
-    // TODO - generic for other ents
     public void MoveEntity(EntityNode entityNode, float delta)
     {
         MOVETYPE mt = entityNode.Entity.MoveType;
@@ -144,6 +169,7 @@ public class World : Node
                 break;
             case MOVETYPE.MISSILE:
                 Vector3 motion = new Vector3();
+                entityNode.Entity.Velocity = -entityNode.Entity.GlobalTransform.basis.z.Normalized() * entityNode.Entity.MoveSpeed;
                 motion = entityNode.Entity.Velocity * delta;
                 KinematicCollision c = entityNode.MoveAndCollide(motion);
                 if (c != null)

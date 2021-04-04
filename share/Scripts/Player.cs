@@ -86,9 +86,8 @@ public class Player : Entity
                     move_forward = 0,
                     move_right = 0,
                     move_up = 0,
-                    aim = new Basis(),
+                    basis = this.GlobalTransform.basis,
                     cam_angle = 0,
-                    rotation = PredictedState.Rotation,
                     attack = 0
                     }
                 );
@@ -108,7 +107,9 @@ public class Player : Entity
             {
                 continue;
             }
-            PlayerNode.Rotation = pCmd.rotation;
+            Transform t2 = PlayerNode.GlobalTransform;
+            t2.basis = pCmd.basis;
+            //PlayerNode.Rotation = pCmd.rotation;
             ClientOwner.LastSnapshot = pCmd.snapshot;
             this.Attack = pCmd.attack;
 
@@ -211,8 +212,8 @@ public class Player : Entity
 
         float scale = CmdScale(pCmd);
 
-        wishDir += pCmd.aim.x * pCmd.move_right;
-        wishDir -= pCmd.aim.z * pCmd.move_forward;
+        wishDir += pCmd.basis.x * pCmd.move_right;
+        wishDir -= pCmd.basis.z * pCmd.move_forward;
         wishDir = wishDir.Normalized();
         Vector3 moveDirectionNorm = wishDir;
 
@@ -264,8 +265,8 @@ public class Player : Entity
         
         float scale = CmdScale(pCmd);
 
-        wishdir += pCmd.aim.x * pCmd.move_right;
-        wishdir -= pCmd.aim.z * pCmd.move_forward;
+        wishdir += pCmd.basis.x * pCmd.move_right;
+        wishdir -= pCmd.basis.z * pCmd.move_forward;
 
         float wishspeed = wishdir.Length();
         wishspeed *= MoveSpeed;

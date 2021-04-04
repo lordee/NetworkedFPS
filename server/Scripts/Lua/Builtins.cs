@@ -25,7 +25,7 @@ static public class Builtins
         }
         GD.Print(sb.ToString());
 
-        BroadcastUnreliable(PACKETTYPE.PRINT_HIGH, sb.ToString());
+        BroadcastUnreliable(PACKET.PRINT_HIGH, sb.ToString());
     }
 
     static public void BSound(Vector3 origin, string res)
@@ -39,17 +39,17 @@ static public class Builtins
         sb.Append(",");
         sb.Append(res); // FIXME - tag resources with IDs shared between client/server instead
 
-        BroadcastUnreliable(PACKETTYPE.BSOUND, sb.ToString());
+        BroadcastUnreliable(PACKET.BSOUND, sb.ToString());
     }
 
     static public void Remove(Entity entity)
     {
         Main.World.EntityManager.RemoveEntity(entity);
-        
-        BroadcastUnreliable(PACKETTYPE.REMOVE, entity.EntityNode.Name);
+        // FIXME - use id
+        BroadcastUnreliable(PACKET.REMOVE, entity.EntityID.ToString());
     }
 
-    static public void BroadcastUnreliable(PACKETTYPE type, string value)
+    static public void BroadcastUnreliable(PACKET type, string value)
     {
         foreach(Client c in Main.Network.Clients)
         {
@@ -69,10 +69,11 @@ static public class Builtins
     {
         Entity ent = Main.World.EntityManager.Spawn(sceneName);
         sb.Clear();
-        sb.Append(sceneName);
-        sb.Append(",");
         sb.Append(ent.EntityID);
-        BroadcastUnreliable(PACKETTYPE.SPAWN, sb.ToString());
+        sb.Append(",");
+        sb.Append(sceneName);
+        
+        BroadcastUnreliable(PACKET.SPAWN, sb.ToString());
         return ent;
     }
 
