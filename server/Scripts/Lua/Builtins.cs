@@ -2,6 +2,7 @@ using System;
 using Godot;
 using System.Text;
 using System.Reflection;
+using System.Collections.Generic;
 
 static public class Builtins
 {
@@ -25,38 +26,43 @@ static public class Builtins
         }
         GD.Print(sb.ToString());
 
-        BroadcastUnreliable(PACKET.PRINT_HIGH, sb.ToString());
+        List<byte> packet = new List<byte>();
+        Util.AppendStringBytes(ref packet, PACKET.PRINT_HIGH, sb.ToString());
+
+        QueueBroadcastUnreliable(packet);
+    }
+
+    static public void Precache(string res)
+    {
+        LuaResource lr = new LuaResource();
+        lr.ID = Main.World.GetResourceID();
+        lr.Location = res;
+        Main.World.Resources.Add(lr);
     }
 
     static public void BSound(Vector3 origin, string res)
     {
-        sb.Clear();
-        sb.Append(origin.x);
-        sb.Append(",");
-        sb.Append(origin.y);
-        sb.Append(",");
-        sb.Append(origin.z);
-        sb.Append(",");
-        sb.Append(res); // FIXME - tag resources with IDs shared between client/server instead
-
-        BroadcastUnreliable(PACKET.BSOUND, sb.ToString());
+        int id = Main.World.Resources.Find(e => e.Location == res).ID;
+        List<byte> packet = new List<byte>();
+        Util.AppendVectorBytes(ref packet, PACKET.BSOUND, origin);
+        Util.AppendIntBytes(ref packet, PACKET.RESOURCEID, id);
+        
+        QueueBroadcastUnreliable(packet);
     }
 
     static public void Remove(Entity entity)
     {
         Main.World.EntityManager.RemoveEntity(entity);
-        // FIXME - use id
-        BroadcastUnreliable(PACKET.REMOVE, entity.EntityID.ToString());
+        List<byte> packet = new List<byte>();
+        Util.AppendIntBytes(ref packet, PACKET.REMOVE, entity.EntityID);
+        QueueBroadcastUnreliable(packet);
     }
 
-    static public void BroadcastUnreliable(PACKET type, string value)
+    static public void QueueBroadcastUnreliable(List<byte> packet)
     {
         foreach(Client c in Main.Network.Clients)
         {
-            c.UnreliablePackets.Add(new PacketSnippet {
-                Type = type,
-                Value = value
-            });
+            c.UnreliablePackets.AddRange(packet);
         }
     }
 
@@ -67,14 +73,20 @@ static public class Builtins
 
     static public Entity Spawn(string sceneName)
     {
-        Entity ent = Main.World.EntityManager.Spawn(sceneName);
-        sb.Clear();
-        sb.Append(ent.EntityID);
-        sb.Append(",");
-        sb.Append(sceneName);
-        
-        BroadcastUnreliable(PACKET.SPAWN, sb.ToString());
-        return ent;
+        Entity entity = Main.World.EntityManager.Spawn(sceneName);
+        LuaResource lr = Main.World.Resources.Find(e => e.Location == sceneName);
+        if (lr == null)
+        {
+            GD.Print(sceneName, " has not been precached");
+            return null;
+        }
+
+        List<byte> packet = new List<byte>();
+        Util.AppendIntBytes(ref packet, PACKET.SPAWN, lr.ID);
+        Util.AppendIntBytes(ref packet, PACKET.ENTITYID, entity.EntityID);
+
+        QueueBroadcastUnreliable(packet);
+        return entity;
     }
 
     static public Entity Find(Entity entity, string fieldName, string fieldValue)

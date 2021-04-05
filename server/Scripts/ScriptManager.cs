@@ -12,6 +12,7 @@ public class ScriptManager : Node
     DynValue luaPlayerSpawn;
     DynValue luaProcessEntity;
     DynValue luaPlayerPostFrame;
+    DynValue luaWorldPostLoad;
     
     public override void _Ready()
     {
@@ -66,6 +67,7 @@ public class ScriptManager : Node
         luaPlayerSpawn = ScriptServer.Globals.Get("PlayerSpawn");
         luaProcessEntity = ScriptServer.Globals.Get("ProcessEntity");
         luaPlayerPostFrame = ScriptServer.Globals.Get("PlayerPostFrame");
+        luaWorldPostLoad = ScriptServer.Globals.Get("WorldPostLoad");
         server.AttachToScript(ScriptServer, "main.lua");
 
         // c# functions
@@ -76,6 +78,7 @@ public class ScriptManager : Node
         ScriptServer.Globals["BSound"] = (Action<Vector3, string>)Builtins.BSound;
         ScriptServer.Globals["Remove"] = (Action<Entity>)Builtins.Remove;
         ScriptServer.Globals["Spawn"] = (Func<string, Entity>)Builtins.Spawn;
+        ScriptServer.Globals["Precache"] = (Action<string>)Builtins.Precache;
     }
 
     // Player
@@ -135,7 +138,7 @@ public class ScriptManager : Node
 
     public void WorldPostLoad(World w)
     {
-        
+        ScriptServer.Call(luaWorldPostLoad);
     }
 
     public void WorldStartFrame(World w)

@@ -48,6 +48,11 @@ function info_player_teamspawn (entity)
     
 end
 
+function WorldPostLoad ()
+    Precache("shots/rocket.wav");
+    Precache("Weapons/Rocket.tscn");
+end
+
 function ClientConnected (player)
     BPrint(player.NetName, " has joined the game");
     player.Fields.team_no = 1;
@@ -77,6 +82,7 @@ function FireRocket (shooter)
     
     -- TODO - use scenes for now? but then do we need bsound etc?
     local ent = Spawn("Weapons/Rocket.tscn");
+    BPrint("fired rocket");
     ent.Owner = shooter;
     ent.MoveType = MOVETYPE.MISSILE;
     ent.GlobalTransform = shooter.GlobalTransform;
@@ -87,19 +93,22 @@ function FireRocket (shooter)
     ent.ClassName = "proj_rocket";
 
     ent.Fields.Weapon = WEAPON.ROCKET;
-
-
 end
 
 function RemoveEnt (entity)
+    BPrint("remove ent");
     Remove(entity);
 end
 
 function RocketTouch (entity, other)
+    BPrint("rocket touch 1");
+    BPrint("rocket touch a");
     local touched = "world";
     if (other != nil) then
         touched = other.NetName;
     end
+    BPrint("rocket touch 2");
+    BPrint("rocket touch b");
     BPrint(entity.Owner.NetName, "'s rocket touched ", touched, " at ", entity.Origin);
     RemoveEnt(entity);
 end

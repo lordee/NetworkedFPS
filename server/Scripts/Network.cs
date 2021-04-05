@@ -57,10 +57,13 @@ public class Network : Node
         GD.Print("Client connected - ID: " +  id);
         Client c = new Client(id);
         Clients.Add(c);
+        // FIXME - also do this on map change to support map entities
+        SendResourceList(c);
         
         Main.World.AddPlayer(c);
         Rpc(nameof(AddPlayer), id);
         RpcId(c.NetworkID, nameof(ChangeMap), Main.World.MapName);
+        SendResourceList(c); // FIXME - this is bad
         Main.ScriptManager.ClientConnected(c);
     }
 
@@ -89,32 +92,17 @@ public class Network : Node
     {
         GD.Print("ConnectionRemoved");
     }
-/*
-    private string BuildReliablePacketString(List<PacketSnippet> packets)
-    {
-        sb.Clear();
-        if (packets.Count == 0)
-        {
-            return "";
-        }
-        sb.Append(Main.World.ServerSnapshot);
-        sb.Append(",");
-        foreach (PacketSnippet packet in packets)
-        {
-            packet.SnapNumSent = Main.World.ServerSnapshot;
-            sb.Append(PACKET.HEADER);
-            sb.Append(",");
-            sb.Append((int)packet.Type);
-            sb.Append(",");
-            sb.Append(packet.Value);
-            sb.Append(",");
-        }
-        sb.Append(PACKET.END);
 
-        return sb.ToString();
-    }
-*/
-    
+    public void SendResourceList(Client client)
+    {
+        List<byte> packet = new List<byte>();
+        foreach(LuaResource lr in Main.World.Resources)
+        {
+            Util.AppendIntBytes(ref packet, PACKET.RESOURCEID, lr.ID);
+            Util.AppendStringBytes(ref packet, PACKET.RESOURCE, lr.Location);
+        }
+        RpcId(client.NetworkID, nameof(ReceiveResourceList), packet);
+    }    
 
     private byte[] BuildUnreliablePacket(Client client)
     {
@@ -137,17 +125,11 @@ public class Network : Node
             Util.AppendVectorBytes(ref packet, PACKET.ROTATION, c.Player.ServerState.Rotation);
         }
 
-        foreach (PacketSnippet ps in client.UnreliablePackets)
+        if (client.UnreliablePackets.Count > 0)
         {
-            if (ps.SnapNumSent == -1)
-            {
-                ps.SnapNumSent = Main.World.ServerSnapshot;
-            }
-            Util.DiffAndAppendBytes(ref packet, true, ps.Type, ps.Value);
+            packet.AddRange(client.UnreliablePackets);
+            client.UnreliablePackets.Clear();
         }
-
-        // FIXME - is this acceptable, or should we retry? Or recategorise to use enet reliables
-        client.UnreliablePackets.Clear();
 
         GameState currentState = Main.World.GameStates.Last();
         // get last acked clientstate
@@ -300,6 +282,11 @@ public class Network : Node
     // FIXME - player shouldn't reference this, playercontroller should
     public void SendPMovement(int RecID, int id, List<PlayerCmd> pCmdQueue)
     {  
+        // STUB
+    }
+
+    public void ReceiveResourceList(byte[] packet)
+    {
         // STUB
     }
 }

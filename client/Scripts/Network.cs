@@ -123,13 +123,18 @@ public class Network : Node
         ReceiveUnreliablePacket(packet);
     }
 
-    private void PacketBSound(byte[] packet)
+    private void PacketBSound(byte[] val, byte[] packet, ref int i)
     {
         Vector3 org = Util.ReadV3(packet);
-        string res = BitConverter.ToString(packet, sizeof(float)*3);
-        res = Util.GetResourceString(res, RESOURCE.SOUND);
-
-        Main.SoundManager.Sound3D(org, res);
+        PACKET type = PACKET.NONE;
+        val = Util.GetNextPacketBytes(packet, ref type, ref i);
+        if (type == PACKET.RESOURCEID)
+        {
+            int resourceID = BitConverter.ToInt32(val, 0);
+            string resource = Main.World.Resources.Find(e => e.ID == resourceID).Location;
+            resource = Util.GetResourceString(resource, RESOURCE.SOUND);
+            Main.SoundManager.Sound3D(org, resource);
+        }
     }
 
     private void PacketRemove(byte[] packet)
@@ -158,6 +163,7 @@ public class Network : Node
         bool entPacket = true;
         while (entPacket && i < packet.Length)
         {
+            int oldi = i;
             val = Util.GetNextPacketBytes(packet, ref type, ref i);
             if (type == PACKET.ENTITYID)
             {
@@ -201,6 +207,7 @@ public class Network : Node
                         break;
                     default:
                         entPacket = false;
+                        i = oldi;
                         break;
                 }
             }
@@ -213,32 +220,68 @@ public class Network : Node
     }
 
     [Slave]
+    public void ReceiveResourceList(byte[] packet)
+    {
+        Main.World.Resources.Clear();
+        int i = 0;
+
+        LuaResource lr = null;
+        while (i < packet.Length)
+        {
+            PACKET type = PACKET.NONE;
+            byte[] val = Util.GetNextPacketBytes(packet, ref type, ref i);
+
+            switch(type)
+            {
+                case PACKET.RESOURCEID:
+                    lr = new LuaResource();
+                    lr.ID = BitConverter.ToInt32(val, 0);
+                    break;
+                case PACKET.RESOURCE:
+                    lr.Location = Encoding.UTF8.GetString(val);
+                    Main.World.Resources.Add(lr);
+                    break;
+            }
+        }
+    }
+
+    [Slave]
     public void ReceiveUnreliablePacket(byte[] packet)
     {
         int i = 0;
         PACKET type = PACKET.NONE;
         byte[] val = Util.GetNextPacketBytes(packet, ref type, ref i);
         Main.World.ServerSnapshot = BitConverter.ToInt32(val, 0);
-
         while (i < packet.Length)
         {
             type = PACKET.NONE;
             val = Util.GetNextPacketBytes(packet, ref type, ref i);
-
+            sb.Clear();
             switch(type)
             {
                 case PACKET.BSOUND:
                     // TODO - sound manager, nodes from precache in script so no node creation
-                    PacketBSound(val);
+                    PacketBSound(val, packet, ref i);
                     break;
                 case PACKET.PRINT_HIGH:
-                    string msg = BitConverter.ToString(val);
+                    // FIXME - isn't working
+                    
+                    foreach (byte b in val)
+                    {
+                        sb.Append(b);
+                        sb.Append(" ");
+                    }
+                    GD.Print(sb.ToString());
+                    string msg = Encoding.UTF8.GetString(val);
+                    GD.Print(msg);
                     Console.Print(msg);
                     HUD.Print(msg);
                     break;
                 case PACKET.SPAWN:
+                    int resID = BitConverter.ToInt32(val, 0);
+                    val = Util.GetNextPacketBytes(packet, ref type, ref i);
                     UInt16 entID = BitConverter.ToUInt16(val, 0);
-                    string sceneName = BitConverter.ToString(val, sizeof(UInt16));
+                    string sceneName = Main.World.Resources.Find(e => e.ID == resID).Location;
                     
                     Main.World.EntityManager.SpawnWithID(sceneName, entID);
                     break;
@@ -253,6 +296,7 @@ public class Network : Node
                     bool playerpacket = true;
                     while (playerpacket)
                     {
+                        int oldi = i;
                         val = Util.GetNextPacketBytes(packet, ref type, ref i);
                         switch (type)
                         {
@@ -276,6 +320,7 @@ public class Network : Node
                                 break;
                             default:
                                 playerpacket = false;
+                                i = oldi;
                                 break;
                         }
                     }

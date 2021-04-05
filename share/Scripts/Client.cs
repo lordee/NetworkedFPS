@@ -9,7 +9,7 @@ public class Client
     public int LastAckSnapShot = 0;
     public int LastSnapshot = 0; // this is for sorting/applying only future pcmd packets
     public List<PacketSnippet> ReliablePackets = new List<PacketSnippet>();
-    public List<PacketSnippet> UnreliablePackets = new List<PacketSnippet>();
+    public List<byte> UnreliablePackets = new List<byte>();
     public List<GameState> GameStates = new List<GameState>();
 
 

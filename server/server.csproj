@@ -35,6 +35,7 @@
     <Compile Include="share\Scripts\PacketSnippet.cs" />
     <Compile Include="share\Scripts\GameState.cs" />
     <Compile Include="share\Scripts\EntityState.cs" />
+    <Compile Include="share\Scripts\LuaResource.cs" />
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="MoonSharp" Version="2.0.0" />

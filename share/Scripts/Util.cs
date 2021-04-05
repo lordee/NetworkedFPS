@@ -3,6 +3,7 @@ using Godot;
 using System.Runtime.Serialization.Formatters.Binary;
 using System.IO;
 using System.Collections.Generic;
+using System.Text;
 
 public class Util
 {
@@ -100,6 +101,14 @@ public class Util
     static public void AppendIntBytes(ref List<byte> packet, PACKET type, int value)
     {
         byte[] val = BitConverter.GetBytes(value);
+        packet.Add((byte)type);
+        packet.Add((byte)val.Length);
+        packet.AddRange(val);
+    }
+
+    static public void AppendStringBytes(ref List<byte> packet, PACKET type, string value)
+    {
+        byte[] val = Encoding.UTF8.GetBytes(value);
         packet.Add((byte)type);
         packet.Add((byte)val.Length);
         packet.AddRange(val);

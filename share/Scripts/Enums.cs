@@ -38,7 +38,9 @@ public enum PACKET : byte // entity type
     PCMDRIGHT,
     PCMDCAMANGLE,
     PCMDATTACK,
-    IMPULSE
+    IMPULSE,
+    RESOURCEID,
+    RESOURCE,
 }
 
 public enum RESOURCE
