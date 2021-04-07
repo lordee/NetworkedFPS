@@ -38,17 +38,15 @@ public class Network : Node
             byte[] packetBytes = BuildUnreliablePacket(c);
             if (packetBytes.Length > 0)
             {
-                RpcUnreliableId(c.NetworkID, nameof(ReceiveUnreliablePacket), packetBytes);
+                RpcUnreliableId(c.NetworkID, nameof(ReceivePacket), packetBytes);
             }
             
             // FIXME
-            /*if (c.ReliablePackets.Count > 0)
+            byte[] packetBytesReliable = BuildReliablePacket(c);
+            if (packetBytesReliable.Length > 0)
             {
-                string reliablePacketString = BuildReliablePacketString(c.ReliablePackets);
-                byte[] reliablePacketBytes = Encoding.UTF8.GetBytes(reliablePacketString);
-                RpcId(c.NetworkID, nameof(ReceiveReliablePacket), reliablePacketBytes);
-                c.ReliablePackets.Clear();
-            }*/
+                RpcId(c.NetworkID, nameof(ReceivePacket), packetBytesReliable);
+            }
         }
     }
 
@@ -102,7 +100,21 @@ public class Network : Node
             Util.AppendStringBytes(ref packet, PACKET.RESOURCE, lr.Location);
         }
         RpcId(client.NetworkID, nameof(ReceiveResourceList), packet);
-    }    
+    }
+
+    private byte[] BuildReliablePacket(Client client)
+    {
+        List<byte> packet = new List<byte>();
+        Util.AppendIntBytes(ref packet, PACKET.SNAPSHOT, Main.World.ServerSnapshot);
+
+        if (client.ReliablePackets.Count > 0)
+        {
+            packet.AddRange(client.ReliablePackets);
+            client.ReliablePackets.Clear();
+        }
+        
+        return packet.ToArray();
+    }
 
     private byte[] BuildUnreliablePacket(Client client)
     {
@@ -255,11 +267,7 @@ public class Network : Node
     }
 
     // stubs
-    public void ReceiveUnreliablePacket(byte[] packet)
-    {
-        // STUB for clients
-    }
-    public void ReceiveReliablePacket(byte[] packet)
+    public void ReceivePacket(byte[] packet)
     {
         // STUB for clients
     }

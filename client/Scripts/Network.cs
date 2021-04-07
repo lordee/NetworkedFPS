@@ -116,13 +116,6 @@ public class Network : Node
         pc.Attach(p);
     }
 
-    [Slave]
-    public void ReceiveReliablePacket(byte[] packet)
-    {
-        // not sure we need separate methods actually as channels are handled by enet...
-        ReceiveUnreliablePacket(packet);
-    }
-
     private void PacketBSound(byte[] val, byte[] packet, ref int i)
     {
         Vector3 org = Util.ReadV3(packet);
@@ -246,7 +239,7 @@ public class Network : Node
     }
 
     [Slave]
-    public void ReceiveUnreliablePacket(byte[] packet)
+    public void ReceivePacket(byte[] packet)
     {
         int i = 0;
         PACKET type = PACKET.NONE;
@@ -264,16 +257,12 @@ public class Network : Node
                     PacketBSound(val, packet, ref i);
                     break;
                 case PACKET.PRINT_HIGH:
-                    // FIXME - isn't working
-                    
                     foreach (byte b in val)
                     {
                         sb.Append(b);
                         sb.Append(" ");
                     }
-                    GD.Print(sb.ToString());
                     string msg = Encoding.UTF8.GetString(val);
-                    GD.Print(msg);
                     Console.Print(msg);
                     HUD.Print(msg);
                     break;

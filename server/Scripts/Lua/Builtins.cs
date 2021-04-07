@@ -29,7 +29,7 @@ static public class Builtins
         List<byte> packet = new List<byte>();
         Util.AppendStringBytes(ref packet, PACKET.PRINT_HIGH, sb.ToString());
 
-        QueueBroadcastUnreliable(packet);
+        QueueBroadcastReliable(packet);
     }
 
     static public void Precache(string res)
@@ -55,7 +55,15 @@ static public class Builtins
         Main.World.EntityManager.RemoveEntity(entity);
         List<byte> packet = new List<byte>();
         Util.AppendIntBytes(ref packet, PACKET.REMOVE, entity.EntityID);
-        QueueBroadcastUnreliable(packet);
+        QueueBroadcastReliable(packet);
+    }
+
+    static public void QueueBroadcastReliable(List<byte> packet)
+    {
+        foreach(Client c in Main.Network.Clients)
+        {
+            c.ReliablePackets.AddRange(packet);
+        }
     }
 
     static public void QueueBroadcastUnreliable(List<byte> packet)
