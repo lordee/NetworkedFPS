@@ -94,10 +94,10 @@ public class Network : Node
     public void SendResourceList(Client client)
     {
         List<byte> packet = new List<byte>();
-        foreach(LuaResource lr in Main.World.Resources)
+        foreach(LuaResource lr in Main.World.EntityManager.Resources)
         {
             Util.AppendIntBytes(ref packet, PACKET.RESOURCEID, lr.ID);
-            Util.AppendStringBytes(ref packet, PACKET.RESOURCE, lr.Location);
+            Util.AppendStringBytes(ref packet, PACKET.RESOURCE, lr.Resource);
         }
         RpcId(client.NetworkID, nameof(ReceiveResourceList), packet);
     }

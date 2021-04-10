@@ -107,8 +107,15 @@ public class Player : Entity
             {
                 continue;
             }
-            Transform t2 = PlayerNode.GlobalTransform;
-            t2.basis = pCmd.basis;
+            if (NetworkID != Main.Network.GetTree().GetNetworkUniqueId())
+            {
+                // FIXME - basis interacts real weird with current movement code, pointing down results in playing moving down and sliding rather than a straight slide
+                // bobbing effect, feels awful
+                Transform t2 = PlayerNode.GlobalTransform;
+                t2.basis = pCmd.basis;
+                PlayerNode.GlobalTransform = t2;
+            }
+            
             //PlayerNode.Rotation = pCmd.rotation;
             ClientOwner.LastSnapshot = pCmd.snapshot;
             this.Attack = pCmd.attack;

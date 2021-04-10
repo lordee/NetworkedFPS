@@ -28,8 +28,7 @@ public class World : Node
     public List<Snapshot> Snapshots = new List<Snapshot>();
     public List<GameState> GameStates = new List<GameState>();
 
-    public List<LuaResource> Resources = new List<LuaResource>();
-
+    
     // Called when the node enters the scene tree for the first time.
     public override void _Ready()
     {
@@ -249,7 +248,7 @@ public class World : Node
     public void LoadWorld()
     {
         // TODO - RemoveOldMapNode();
-        Resources.Clear();
+        EntityManager.Resources.Clear();
         Main.ScriptManager.WorldPreLoad(this);
         StartWorld();
         foreach (Client c in Main.Network.Clients)
@@ -333,10 +332,5 @@ public class World : Node
                 brp.GlobalTransform = t;
             }
         }
-    }
-
-    public UInt16 GetResourceID()
-    {
-        return (UInt16)Resources.Count;
     }
 }

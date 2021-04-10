@@ -49,8 +49,8 @@ function info_player_teamspawn (entity)
 end
 
 function WorldPostLoad ()
-    Precache("shots/rocket.wav");
-    Precache("Weapons/Rocket.tscn");
+    Precache_Sound("shots/rocket.wav");
+    Precache_Scene("Weapons/Rocket.tscn");
 end
 
 function ClientConnected (player)
@@ -83,7 +83,8 @@ function FireRocket (shooter)
     -- TODO - use scenes for now? but then do we need bsound etc?
     local ent = Spawn("Weapons/Rocket.tscn");
     ent.Owner = shooter;
-    ent.MoveType = MOVETYPE.MISSILE;
+    --ent.MoveType = MOVETYPE.MISSILE;
+    ent.MoveType = MOVETYPE.NONE;
     ent.GlobalTransform = shooter.GlobalTransform;
     ent.MoveSpeed = 90;
     ent.Touch = "RocketTouch";

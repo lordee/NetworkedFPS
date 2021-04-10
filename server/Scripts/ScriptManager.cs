@@ -78,7 +78,9 @@ public class ScriptManager : Node
         ScriptServer.Globals["BSound"] = (Action<Vector3, string>)Builtins.BSound;
         ScriptServer.Globals["Remove"] = (Action<Entity>)Builtins.Remove;
         ScriptServer.Globals["Spawn"] = (Func<string, Entity>)Builtins.Spawn;
-        ScriptServer.Globals["Precache"] = (Action<string>)Builtins.Precache;
+        ScriptServer.Globals["Precache"] = (Action<string, RESOURCE>)Builtins.Precache;
+        ScriptServer.Globals["Precache_Sound"] = (Action<string>)Builtins.Precache_Sound;
+        ScriptServer.Globals["Precache_Scene"] = (Action<string>)Builtins.Precache_Scene;
     }
 
     // Player

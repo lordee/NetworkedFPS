@@ -32,20 +32,30 @@ static public class Builtins
         QueueBroadcastReliable(packet);
     }
 
-    static public void Precache(string res)
+    static public void Precache_Scene(string res)
+    {
+        Precache(res, RESOURCE.SCENE);
+    }
+
+    static public void Precache_Sound(string res)
+    {
+        Precache(res, RESOURCE.SOUND);
+    }
+
+    static public void Precache(string res, RESOURCE type)
     {
         LuaResource lr = new LuaResource();
-        lr.ID = Main.World.GetResourceID();
-        lr.Location = res;
-        Main.World.Resources.Add(lr);
+        lr.ID = Main.World.EntityManager.GetResourceID();
+        lr.Resource = Util.GetResourceString(res, type);
+        Main.World.EntityManager.Resources.Add(lr);
     }
 
     static public void BSound(Vector3 origin, string res)
     {
-        int id = Main.World.Resources.Find(e => e.Location == res).ID;
+        UInt16 id = Main.World.EntityManager.Resources.Find(e => e.Resource == Util.GetResourceString(res, RESOURCE.SOUND)).ID;
         List<byte> packet = new List<byte>();
         Util.AppendVectorBytes(ref packet, PACKET.BSOUND, origin);
-        Util.AppendIntBytes(ref packet, PACKET.RESOURCEID, id);
+        Util.AppendUInt16Bytes(ref packet, PACKET.RESOURCEID, id);
         
         QueueBroadcastUnreliable(packet);
     }
@@ -81,8 +91,9 @@ static public class Builtins
 
     static public Entity Spawn(string sceneName)
     {
-        Entity entity = Main.World.EntityManager.Spawn(sceneName);
-        LuaResource lr = Main.World.Resources.Find(e => e.Location == sceneName);
+        LuaResource lr = Main.World.EntityManager.Resources.Find(e => e.Resource == Util.GetResourceString(sceneName, RESOURCE.SCENE));
+        Entity entity = Main.World.EntityManager.Spawn(lr.ID);
+        
         if (lr == null)
         {
             GD.Print(sceneName, " has not been precached");

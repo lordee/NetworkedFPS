@@ -13,6 +13,9 @@ public class EntityManager : Node
     public List<Entity> RemoveEntityQueue = new List<Entity>();
     StringBuilder sb = new StringBuilder();
 
+    public List<LuaResource> Resources = new List<LuaResource>();
+
+
     // Called when the node enters the scene tree for the first time.
     public override void _Ready()
     {
@@ -68,12 +71,13 @@ public class EntityManager : Node
         return Entities.Where(e => e.EntityID == id).FirstOrDefault();
     }
 
-    public Entity Spawn(string sceneName)
+    public Entity Spawn(UInt16 resID)
     {
-        PackedScene ps = ResourceLoader.Load(Util.GetResourceString(sceneName, RESOURCE.SCENE)) as PackedScene;
+        PackedScene ps = Main.World.EntityManager.Resources.Find(e => e.ID == resID).PackedScene;
         EntityNode en = ps.Instance() as EntityNode;
-        AddChild(en);
         en.Init(en.Name);
+        AddChild(en);
+        
         Entities.Add(en.Entity);
 
         return en.Entity;
@@ -86,9 +90,14 @@ public class EntityManager : Node
         // FIXME - cycle through count
     }
 
-    public void SpawnWithID(string sceneName, UInt16 entID)
+    public void SpawnWithID(UInt16 resID, UInt16 entID)
     {
-        Entity ent = Spawn(sceneName);
+        Entity ent = Spawn(resID);
         ent.EntityID = entID;
+    }
+
+    public UInt16 GetResourceID()
+    {
+        return (UInt16)Resources.Count;
     }
 }

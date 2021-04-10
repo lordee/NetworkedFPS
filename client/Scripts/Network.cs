@@ -123,9 +123,8 @@ public class Network : Node
         val = Util.GetNextPacketBytes(packet, ref type, ref i);
         if (type == PACKET.RESOURCEID)
         {
-            int resourceID = BitConverter.ToInt32(val, 0);
-            string resource = Main.World.Resources.Find(e => e.ID == resourceID).Location;
-            resource = Util.GetResourceString(resource, RESOURCE.SOUND);
+            UInt16 resourceID = BitConverter.ToUInt16(val, 0);
+            string resource = Main.World.EntityManager.Resources.Find(e => e.ID == resourceID).Resource;
             Main.SoundManager.Sound3D(org, resource);
         }
     }
@@ -215,7 +214,7 @@ public class Network : Node
     [Slave]
     public void ReceiveResourceList(byte[] packet)
     {
-        Main.World.Resources.Clear();
+        Main.World.EntityManager.Resources.Clear();
         int i = 0;
 
         LuaResource lr = null;
@@ -228,11 +227,11 @@ public class Network : Node
             {
                 case PACKET.RESOURCEID:
                     lr = new LuaResource();
-                    lr.ID = BitConverter.ToInt32(val, 0);
+                    lr.ID = BitConverter.ToUInt16(val, 0);
                     break;
                 case PACKET.RESOURCE:
-                    lr.Location = Encoding.UTF8.GetString(val);
-                    Main.World.Resources.Add(lr);
+                    lr.Resource = Encoding.UTF8.GetString(val);
+                    Main.World.EntityManager.Resources.Add(lr);
                     break;
             }
         }
@@ -267,12 +266,11 @@ public class Network : Node
                     HUD.Print(msg);
                     break;
                 case PACKET.SPAWN:
-                    int resID = BitConverter.ToInt32(val, 0);
+                    UInt16 resID = BitConverter.ToUInt16(val, 0);
                     val = Util.GetNextPacketBytes(packet, ref type, ref i);
                     UInt16 entID = BitConverter.ToUInt16(val, 0);
-                    string sceneName = Main.World.Resources.Find(e => e.ID == resID).Location;
                     
-                    Main.World.EntityManager.SpawnWithID(sceneName, entID);
+                    Main.World.EntityManager.SpawnWithID(resID, entID);
                     break;
                 case PACKET.PLAYERID:
                     int id = BitConverter.ToInt32(val, 0);

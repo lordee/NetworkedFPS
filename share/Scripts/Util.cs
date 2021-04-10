@@ -98,6 +98,14 @@ public class Util
         packet.AddRange(val);
     }
 
+    static public void AppendUInt16Bytes(ref List<byte> packet, PACKET type, UInt16 value)
+    {
+        byte[] val = BitConverter.GetBytes(value);
+        packet.Add((byte)type);
+        packet.Add((byte)val.Length);
+        packet.AddRange(val);
+    }
+
     static public void AppendIntBytes(ref List<byte> packet, PACKET type, int value)
     {
         byte[] val = BitConverter.GetBytes(value);
