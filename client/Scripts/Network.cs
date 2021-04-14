@@ -160,6 +160,7 @@ public class Network : Node
             if (type == PACKET.ENTITYID)
             {
                 entPacket = false;
+                i = oldi;
             }
             if (process)
             {
@@ -269,7 +270,7 @@ public class Network : Node
                     UInt16 resID = BitConverter.ToUInt16(val, 0);
                     val = Util.GetNextPacketBytes(packet, ref type, ref i);
                     UInt16 entID = BitConverter.ToUInt16(val, 0);
-                    
+
                     Main.World.EntityManager.SpawnWithID(resID, entID);
                     break;
                 case PACKET.PLAYERID:

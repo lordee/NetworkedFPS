@@ -83,8 +83,7 @@ function FireRocket (shooter)
     -- TODO - use scenes for now? but then do we need bsound etc?
     local ent = Spawn("Weapons/Rocket.tscn");
     ent.Owner = shooter;
-    --ent.MoveType = MOVETYPE.MISSILE;
-    ent.MoveType = MOVETYPE.NONE;
+    ent.MoveType = MOVETYPE.MISSILE;
     ent.GlobalTransform = shooter.GlobalTransform;
     ent.MoveSpeed = 90;
     ent.Touch = "RocketTouch";

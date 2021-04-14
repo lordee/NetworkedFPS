@@ -63,8 +63,10 @@ public class Util
     static public byte[] GetNextPacketBytes(byte[] packet, ref PACKET type, ref int i)
     {
         type = (PACKET)packet[i++];
+        if (type == PACKET.NONE)
+            return null;
+        
         int length = (int)packet[i++];
-        //int length = BitConverter.ToInt32(packet, i);
         byte[] val = new byte[length];
         Array.Copy(packet, i, val, 0, length);
         i += length;
@@ -128,6 +130,17 @@ public class Util
         packet.Add((byte)type);
         packet.Add((byte)val.Length);
         packet.AddRange(val);
+    }
+
+    static public void PrintBytes(byte[] bytes)
+    {
+        StringBuilder sb = new StringBuilder();
+        foreach (byte b in bytes)
+        {
+            sb.Append(b);
+            sb.Append(" ");
+        }
+        GD.Print(sb.ToString());
     }
 
 /*
