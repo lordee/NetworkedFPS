@@ -156,6 +156,7 @@ public class Network : Node
         }
 
         // diff state
+        // FIXME - map entities are not getting IDs set - they should be spawned by server, not assumed by client
         foreach(EntityState es in currentState.EntityStates)
         {
             EntityState ces = clientState.EntityStates.Find(e => e.EntityID == es.EntityID);
