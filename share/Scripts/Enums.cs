@@ -41,6 +41,7 @@ public enum PACKET : byte // entity type
     IMPULSE,
     RESOURCEID,
     RESOURCE,
+    EMITTING
 }
 
 public enum RESOURCE

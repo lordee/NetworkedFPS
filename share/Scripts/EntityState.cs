@@ -12,4 +12,5 @@ public class EntityState
     public uint CollisionMask = 1;
     public uint CollisionLayer = 1;
     public Vector3 Velocity = new Vector3();
+    public bool Emitting = false;
 }

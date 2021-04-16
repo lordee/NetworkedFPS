@@ -138,6 +138,7 @@ public class Network : Node
     private void PacketEntity(byte[] val, byte[] packet, ref int i)
     {
         UInt16 id = BitConverter.ToUInt16(val, 0);
+
         Entity ent = Main.World.EntityManager.Entities.Find(e => e.EntityID == id);
         bool process = true;
         Transform t = new Transform();
@@ -197,6 +198,10 @@ public class Network : Node
                         break;
                     case PACKET.ORIGIN:
                         t.origin = Util.ReadV3(val);
+                        break;
+                    case PACKET.EMITTING:
+                        UInt16 emit = BitConverter.ToUInt16(val, 0);
+                        ent.Emitting = (emit == 1 ? true : false);
                         break;
                     default:
                         entPacket = false;

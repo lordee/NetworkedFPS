@@ -176,7 +176,8 @@ public class Network : Node
             Util.DiffAndAppendBytes(ref packet, (es.CollisionLayer == ces.CollisionLayer), PACKET.COLLISIONLAYER, es.CollisionLayer);
             Util.DiffAndAppendBytes(ref packet, (es.CollisionMask == ces.CollisionMask), PACKET.COLLISIONMASK, es.CollisionMask);
             Util.DiffAndAppendBytes(ref packet, (es.MoveSpeed == ces.MoveSpeed), PACKET.MOVESPEED, es.MoveSpeed);
-            Util.DiffAndAppendBytes(ref packet, (es.MoveType == ces.MoveType), PACKET.MOVETYPE, (int)es.MoveType);            
+            Util.DiffAndAppendBytes(ref packet, (es.MoveType == ces.MoveType), PACKET.MOVETYPE, (int)es.MoveType);
+            Util.DiffAndAppendBytes(ref packet, (es.Emitting == ces.Emitting), PACKET.EMITTING, es.Emitting);
         }
         client.GameStates.Add(Util.DeepClone(currentState));
         if (client.GameStates.Count > 32)

@@ -47,6 +47,16 @@ public class Entity
     public float MoveSpeed;
     public Vector3 Velocity;
 
+    public bool Emitting {
+        get { return EntityNode.Particles != null ? EntityNode.Particles.Emitting : false; }
+        set {
+            if (EntityNode.Particles != null)
+            {
+                EntityNode.Particles.Emitting = value;
+            }
+        }
+    }
+
     public uint CollisionLayer {
         get { return EntityNode.CollisionLayer; }
         set { 

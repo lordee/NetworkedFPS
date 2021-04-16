@@ -11,6 +11,7 @@ public class EntityManager : Node
     // FIXME - replace with entity manager node
     public List<Entity> Entities = new List<Entity>();
     public List<Entity> RemoveEntityQueue = new List<Entity>();
+    public List<Entity> SpawnedEntityQueue = new List<Entity>();
     StringBuilder sb = new StringBuilder();
 
     public List<LuaResource> Resources = new List<LuaResource>();
@@ -77,8 +78,8 @@ public class EntityManager : Node
         EntityNode en = ps.Instance() as EntityNode;
         en.Init(en.Name);
         AddChild(en);
-        
-        Entities.Add(en.Entity);
+
+        SpawnedEntityQueue.Add(en.Entity);
 
         return en.Entity;
     }

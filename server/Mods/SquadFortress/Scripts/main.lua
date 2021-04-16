@@ -51,6 +51,7 @@ end
 function WorldPostLoad ()
     Precache_Sound("shots/rocket.wav");
     Precache_Scene("Weapons/Rocket.tscn");
+    Precache_Scene("Weapons/Explosion.tscn");
 end
 
 function ClientConnected (player)
@@ -104,6 +105,16 @@ function RocketTouch (entity, other)
         touched = other.NetName;
     end
     BPrint(entity.Owner.NetName, "'s rocket touched ", touched, " at ", entity.Origin);
+
+    local newent = Spawn("Weapons/Explosion.tscn");
+    newent.GlobalTransform = entity.GlobalTransform;
+    newent.CollisionLayer = 0;
+    newent.CollisionMask = 0;
+    newent.Emitting = true;
+
+    newent.Think = "RemoveEnt";
+    newent.NextThink = Time() + 1;
+
     RemoveEnt(entity);
 end
 

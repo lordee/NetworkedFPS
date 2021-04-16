@@ -107,8 +107,13 @@ public class World : Node
                 es.MoveSpeed = entity.MoveSpeed;
                 es.CollisionLayer = entity.CollisionLayer;
                 es.CollisionMask = entity.CollisionMask;
+                es.Emitting = entity.Emitting;
                 gs.EntityStates.Add(es);
             }
+
+            // process spawning collection
+            EntityManager.Entities.AddRange(EntityManager.SpawnedEntityQueue);
+            EntityManager.SpawnedEntityQueue.Clear();
 
             GameStates.Add(gs);
             if (GameStates.Count > 32) // arbitrary

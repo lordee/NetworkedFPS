@@ -164,6 +164,11 @@ also why bother with generics, this is bad code
             {
                 AppendIntBytes(ref packet, type, i);
             }
+            else if (value is bool b)
+            {
+                UInt16 bi = (UInt16)(b ? 1 : 0);
+                AppendIntBytes(ref packet, type, bi);
+            }
         }
     }
 }
