@@ -215,12 +215,20 @@ public class Player : Entity
 
     private void GroundMove(float delta, PlayerCmd pCmd)
     {
+        Velocity.y = 0;
         Vector3 wishDir = new Vector3();
 
         float scale = CmdScale(pCmd);
 
-        wishDir += pCmd.basis.x * pCmd.move_right;
-        wishDir -= pCmd.basis.z * pCmd.move_forward;
+        // FIXME - this should depend on movetype, but let's try a fix for moving downwards in to ground etc
+        Vector3 bz = pCmd.basis.z;
+        bz.y = 0;
+        Vector3 bx = pCmd.basis.x;
+        bx.y = 0;
+
+        wishDir += bx * pCmd.move_right;
+        
+        wishDir -= bz * pCmd.move_forward;
         wishDir = wishDir.Normalized();
         Vector3 moveDirectionNorm = wishDir;
 
@@ -250,8 +258,9 @@ public class Player : Entity
         {
             Vector3 col = PlayerNode.StairCatcher.GetCollisionNormal();
             float ang = Mathf.Rad2Deg(Mathf.Acos(col.Dot(Main.World.Up)));
-            if (ang < _maxStairAngle)
+            if (ang > 0 && ang < _maxStairAngle)
             {
+                GD.Print(ang);
                 Velocity.y = _stairJumpHeight;
             }
         }

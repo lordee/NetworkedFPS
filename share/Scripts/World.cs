@@ -64,6 +64,7 @@ public class World : Node
                 Vector3 velo = c.Player.ServerState.Velocity;
                 Vector3 rot = c.Player.ServerState.Rotation;
 
+                // FIXME - change to gamestate etc
                 PlayerSnap ps = new PlayerSnap();
                 ps.Origin = org;
                 ps.Velocity = velo;
@@ -168,7 +169,7 @@ public class World : Node
                         p2.Player.WishJump = false;
                     }
                 }
-
+                
                 entityNode.Entity.Velocity = entityNode.MoveAndSlide(entityNode.Entity.Velocity, this.Up);
                 entityNode.Entity.TouchingGround = entityNode.IsOnFloor();
                 break;
