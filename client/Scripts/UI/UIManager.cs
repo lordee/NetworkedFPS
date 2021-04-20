@@ -101,7 +101,6 @@ public class UIManager : Node
 
     static public void LoadHUD(Player p)
 	{
-		HUD.Init(p);
 		HUD.Visible = true;
 	}
 }

@@ -4,7 +4,6 @@ using System.Collections.Generic;
 
 public class HUD : CanvasLayer
 {
-    Player _player;
     Label _health;
     Sprite _healthSprite;
     Sprite _armourSprite;
@@ -44,11 +43,6 @@ public class HUD : CanvasLayer
         this.Visible = false;
     }
 
-    public void Init(Player p)
-    {
-        _player = p;
-    }
-
     public override void _Process(float delta)
     {
         if (this.Visible)
@@ -71,8 +65,8 @@ public class HUD : CanvasLayer
             pos.y = pos.y + _healthSprite.Texture.GetSize().y * _healthSprite.Scale.y / 2;
             _healthSprite.GlobalPosition = pos;
 
-            _health.Text = Mathf.CeilToInt(_player.CurrentHealth).ToString();
-            _armour.Text = Mathf.CeilToInt(_player.CurrentArmour).ToString();
+            _health.Text = Mathf.CeilToInt(Main.Client.Player.CurrentHealth).ToString();
+            _armour.Text = Mathf.CeilToInt(Main.Client.Player.CurrentArmour).ToString();
             
             AimAt.GlobalPosition = size / 2;
 
