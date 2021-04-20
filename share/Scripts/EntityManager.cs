@@ -8,10 +8,12 @@ using System.Text;
 public class EntityManager : Node
 {
     private UInt16 _entityCount = 0;
-    // FIXME - replace with entity manager node
     public List<Entity> Entities = new List<Entity>();
     public List<Entity> RemoveEntityQueue = new List<Entity>();
     public List<Entity> SpawnedEntityQueue = new List<Entity>();
+
+    // FIXME - convert to entity base?
+    public List<Player> Players = new List<Player>();
     StringBuilder sb = new StringBuilder();
 
     public List<LuaResource> Resources = new List<LuaResource>();

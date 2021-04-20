@@ -45,7 +45,22 @@ public class Entity
     public MOVETYPE MoveType = MOVETYPE.NONE;
 
     public float MoveSpeed;
-    public Vector3 Velocity;
+    private Vector3 _velocity;
+    public Vector3 Velocity
+    {
+        get { return _velocity; }
+        set 
+        {            
+            _velocity = value;
+            if (Main.Network.IsNetworkMaster() && this is Player p)
+            {
+                // FIXME - change player to entity...
+                p.SetServerState(p.PlayerNode.GlobalTransform.origin
+                , value, p.ServerState.Rotation
+                , p.CurrentHealth, p.CurrentArmour);
+            }
+        }
+    }
 
     public bool Emitting {
         get { return EntityNode.Particles != null ? EntityNode.Particles.Emitting : false; }

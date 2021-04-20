@@ -32,6 +32,11 @@ static public class Builtins
         QueueBroadcastReliable(packet);
     }
 
+    static public Vector3 Normalise (Vector3 vec)
+    {
+        return vec.Normalized();
+    }
+
     static public void Precache_Scene(string res)
     {
         Precache(res, RESOURCE.SCENE);
@@ -74,6 +79,54 @@ static public class Builtins
         {
             c.ReliablePackets.AddRange(packet);
         }
+    }
+
+    static public List<Player> FindRadius(Vector3 org, float radius)
+    {
+        // FIXME - is it faster to pass entity and use sphereshape to find items?
+        /*
+            // test for radius
+            SphereShape s = new SphereShape();
+            s.Radius = radius;
+
+            // Get space and state of the subject body
+            RID space = PhysicsServer.BodyGetSpace(body.GetRid());
+            PhysicsDirectSpaceState state = PhysicsServer.SpaceGetDirectState(space);
+
+            // Setup shape query parameters
+            PhysicsShapeQueryParameters par = new PhysicsShapeQueryParameters();
+            par.ShapeRid = s.GetRid();
+            par.Transform = body.Transform;
+
+            return state.IntersectShape(par, 100);
+        */
+        
+        List<Player> ents = new List<Player>();
+
+        /*foreach (Entity e in Main.World.EntityManager.Entities)
+        {
+            float dist = (e.Origin - org).Length();
+            if (dist <= radius)
+            {
+                ents.Add(e);
+            }
+        }*/
+
+        foreach (Player p in Main.World.EntityManager.Players)
+        {
+            float dist = (p.Origin - org).Length();
+            if (dist <= radius)
+            {
+                ents.Add(p);
+            }
+        }
+
+        return ents;
+    }
+
+    static public float VLen(Vector3 v1, Vector3 v2)
+    {
+        return (v1 - v2).Length();
     }
 
     static public void QueueBroadcastUnreliable(List<byte> packet)

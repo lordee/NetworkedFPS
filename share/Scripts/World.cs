@@ -211,8 +211,10 @@ public class World : Node
         if(speed > 0)
             newspeed /= speed;
 
-        body.Entity.Velocity.x *= newspeed;
-        body.Entity.Velocity.z *= newspeed;
+        Vector3 vel = body.Entity.Velocity;
+        vel.x *= newspeed;
+        vel.z *= newspeed;
+        body.Entity.Velocity = vel;
     }
 
     private Vector3 ApplyGravity(Vector3 velocity, float delta)
@@ -235,6 +237,7 @@ public class World : Node
         
         Players.AddChild(pn);
         pn.Init(c);
+        EntityManager.Players.Add(pn.Player);
         c.Player = pn.Player;
 
         return pn;
@@ -246,6 +249,7 @@ public class World : Node
         if (p != null)
         {
             Main.ScriptManager.WorldPreRemovePlayer(p.Player);
+            EntityManager.Players.Remove(p.Player);
             Players.RemoveChild(p);
             p.Free();
         }

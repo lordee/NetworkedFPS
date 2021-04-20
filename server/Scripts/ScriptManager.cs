@@ -52,6 +52,8 @@ public class ScriptManager : Node
         UserData.RegisterType<Godot.Vector3>();
         UserData.RegisterType<Godot.Transform>();
         UserData.RegisterType<Entity>();
+        UserData.RegisterType<List<Entity>>();
+        UserData.RegisterType<List<Player>>();
 
         DynValue extensions = ScriptServer.Globals.Get("FieldExtensions");
         DynValue res = ScriptServer.Call(extensions);
@@ -78,9 +80,12 @@ public class ScriptManager : Node
         ScriptServer.Globals["BSound"] = (Action<Vector3, string>)Builtins.BSound;
         ScriptServer.Globals["Remove"] = (Action<Entity>)Builtins.Remove;
         ScriptServer.Globals["Spawn"] = (Func<string, Entity>)Builtins.Spawn;
+        ScriptServer.Globals["Normalise"] = (Func<Vector3, Vector3>)Builtins.Normalise;
         ScriptServer.Globals["Precache"] = (Action<string, RESOURCE>)Builtins.Precache;
         ScriptServer.Globals["Precache_Sound"] = (Action<string>)Builtins.Precache_Sound;
         ScriptServer.Globals["Precache_Scene"] = (Action<string>)Builtins.Precache_Scene;
+        ScriptServer.Globals["FindRadius"] = (Func<Vector3, float, List<Player>>)Builtins.FindRadius;
+        ScriptServer.Globals["VLen"] = (Func<Vector3, Vector3, float>)Builtins.VLen;
     }
 
     // Player

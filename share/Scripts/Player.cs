@@ -215,7 +215,6 @@ public class Player : Entity
 
     private void GroundMove(float delta, PlayerCmd pCmd)
     {
-        Velocity.y = 0;
         Vector3 wishDir = new Vector3();
 
         float scale = CmdScale(pCmd);
@@ -235,21 +234,23 @@ public class Player : Entity
         float wishSpeed = wishDir.Length();
         wishSpeed *= MoveSpeed;
         Accelerate(wishDir, wishSpeed, Deceleration, delta);
-       
+
+        Vector3 vel = Velocity;
         if (OnLadder)
         {
+            
             if (pCmd.move_forward != 0f)
             {
-                Velocity.y = MoveSpeed * (pCmd.cam_angle / 90) * pCmd.move_forward;
+                vel.y = MoveSpeed * (pCmd.cam_angle / 90) * pCmd.move_forward;
             }
             else
             {
-                Velocity.y = 0;
+                vel.y = 0;
             }
             if (pCmd.move_right == 0f)
             {
-                Velocity.x = 0;
-                Velocity.z = 0;
+                vel.x = 0;
+                vel.z = 0;
             }
         }
 
@@ -260,16 +261,15 @@ public class Player : Entity
             float ang = Mathf.Rad2Deg(Mathf.Acos(col.Dot(Main.World.Up)));
             if (ang > 0 && ang < _maxStairAngle)
             {
-                GD.Print(ang);
-                Velocity.y = _stairJumpHeight;
+                vel.y = _stairJumpHeight;
             }
         }
 
         if (WishJump && PlayerNode.IsOnFloor())
         {
-            // FIXME - if we add jump speed velocity we enable trimping right?
-            Velocity.y = _jumpSpeed;
+            vel.y += _jumpSpeed;
         }
+        Velocity = vel;
     }
 
     private void AirMove(float delta, PlayerCmd pCmd)
@@ -328,8 +328,10 @@ public class Player : Entity
         accelspeed = accel * delta * wishspeed;
         //if(accelspeed > addspeed)
          //   accelspeed = addspeed;
-        Velocity.x += accelspeed * wishdir.x;
-        Velocity.z += accelspeed * wishdir.z;
+        Vector3 vel = Velocity;
+        vel.x += accelspeed * wishdir.x;
+        vel.z += accelspeed * wishdir.z;
+        Velocity = vel;
     }
 
     /*
