@@ -114,36 +114,36 @@ function RemoveEnt (entity)
     Remove(entity);
 end
 
-function Damage(other, inflictor, damage)
+function Damage(targ, inflictor, damage)
     local damleft = damage;
-    if (other == inflictor.Owner) then
+    if (targ == inflictor.Owner) then
         damleft = damleft * .5;
     end
 
-    local armleft = other.CurrentArmour;
-    local healthleft = other.CurrentHealth;
+    local armleft = targ.CurrentArmour;
+    local healthleft = targ.CurrentHealth;
 
     if (damleft >= armleft) then
-        other.CurrentArmour = 0;
+        targ.CurrentArmour = 0;
         damleft = damleft - armleft;
     else
-        other.CurrentArmour = armleft - damleft;
+        targ.CurrentArmour = armleft - damleft;
         damleft = 0;
     end
 
     if (damleft >= healthleft) then
-        other.CurrentHealth = 0;
-        --Kill(other);
+        targ.CurrentHealth = 0;
+        Kill(targ);
         damleft = damleft - healthleft;
     else
-        other.CurrentHealth = healthleft - damleft;
+        targ.CurrentHealth = healthleft - damleft;
     end
 
-    if (inflictor != nil and other.MoveType == MOVETYPE.STEP) then
-        local dir = other.Origin - inflictor.Origin;
+    if (inflictor != nil and targ.MoveType == MOVETYPE.STEP) then
+        local dir = targ.Origin - inflictor.Origin;
         dir = Normalise(dir);
         dir = dir * damage / SCALINGFACTOR;
-        other.Velocity = other.Velocity + dir;
+        targ.Velocity = targ.Velocity + dir;
     end
 end
 
@@ -164,22 +164,22 @@ function RadiusDamage(inflictor, other)
     end
 end
 
-function RocketTouch (entity, other)
+function RocketTouch (rocket, other)
     -- FIXME - support skies, remove if it's a sky
 
     local touched = "world";
     if (other != nil) then
         touched = other.NetName;
 
-        Damage(other, entity, entity.Fields.damage);
+        Damage(other, rocket, rocket.Fields.damage);
     end
 
-    RadiusDamage(entity, other);
+    RadiusDamage(rocket, other);
 
-    BPrint(entity.Owner.NetName, "'s rocket touched ", touched, " at ", entity.Origin);
+    BPrint(rocket.Owner.NetName, "'s rocket touched ", touched, " at ", rocket.Origin);
 
     local newent = Spawn("Weapons/Explosion.tscn");
-    --newent.GlobalTransform = entity.GlobalTransform;
+    newent.GlobalTransform = rocket.GlobalTransform;
     -- FIXME - I think still causing issues? how do we do no collision, test by running over particles entity
     newent.CollisionLayer = 0;
     newent.CollisionMask = 0;
@@ -188,7 +188,11 @@ function RocketTouch (entity, other)
     newent.Think = "RemoveEnt";
     newent.NextThink = Time() + 1;
 
-    RemoveEnt(entity);
+    RemoveEnt(rocket);
+end
+
+function Kill(targ)
+    
 end
 
 -- FIXME - identify endless loops in lua somehow
