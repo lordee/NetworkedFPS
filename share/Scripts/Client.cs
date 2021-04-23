@@ -3,7 +3,7 @@ using System.Collections.Generic;
 
 public class Client
 {
-    public Player Player;
+    public Entity Player;
     public int NetworkID;
     public float Ping = 0;
     public int LastAckSnapShot = 0;

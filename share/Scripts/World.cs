@@ -6,7 +6,7 @@ using System.Reflection;
 
 public class World : Node
 {
-    Node Players;
+    Node PlayerNodes;
     public EntityManager EntityManager;
 
     private string _mapResource = Util.GetResourceString("1on1r.tscn", RESOURCE.MAP);
@@ -32,7 +32,7 @@ public class World : Node
     // Called when the node enters the scene tree for the first time.
     public override void _Ready()
     {
-        Players = GetNode("Players");
+        PlayerNodes = GetNode("Players");
         EntityManager = GetNode("EntityManager") as EntityManager;
     }
 
@@ -68,12 +68,12 @@ public class World : Node
                 PlayerSnap ps = new PlayerSnap();
                 ps.Origin = org;
                 ps.Velocity = velo;
-                ps.NodeName = c.Player.PlayerNode.Name;
+                ps.NodeName = c.Player.EntityNode.Name;
                 ps.Rotation = rot;
                 ps.CmdQueue = c.Player.pCmdQueue;
                 sn.PlayerSnap.Add(ps);
 
-                Player p = c.Player;
+                Entity p = c.Player;
                 p.Frame(delta);
             }
             Snapshots.Add(sn);
@@ -139,10 +139,10 @@ public class World : Node
         bool applyGrav = true;
         bool wishJump = false;
 
-        if (entityNode is PlayerNode p)
+        if (entityNode.Entity.EntityType == ENTITYTYPE.PLAYER)
         {
-            wishJump = p.Player.WishJump;
-            if (p.Player.OnLadder)
+            wishJump = entityNode.Entity.WishJump;
+            if (entityNode.Entity.OnLadder)
             {
                 applyGrav = false;
             }
@@ -164,9 +164,9 @@ public class World : Node
                 {
                     ApplyFriction(entityNode, 0, delta);
 
-                    if (entityNode is PlayerNode p2)
+                    if (entityNode.Entity.EntityType == ENTITYTYPE.PLAYER)
                     {
-                        p2.Player.WishJump = false;
+                        entityNode.Entity.WishJump = false;
                     }
                 }
                 
@@ -223,34 +223,34 @@ public class World : Node
         return velocity;
     }
 
-    public PlayerNode AddPlayer(Client c)
+    public EntityNode AddPlayer(Client c)
     {
         // add player to world node for each client
-        Node n = Players.GetNodeOrNull(c.NetworkID.ToString());
+        Node n = PlayerNodes.GetNodeOrNull(c.NetworkID.ToString());
         if (n != null)
         {
-            Players.RemoveChild(n);
+            PlayerNodes.RemoveChild(n);
             n.Free();
         }
 
-        PlayerNode pn = PlayerNode.Instance();
+        EntityNode pn = EntityNode.InstancePlayer();
         
-        Players.AddChild(pn);
-        pn.Init(c);
-        EntityManager.Players.Add(pn.Player);
-        c.Player = pn.Player;
+        PlayerNodes.AddChild(pn);
+        pn.Init(c.NetworkID.ToString(), ENTITYTYPE.PLAYER, c);
+        EntityManager.Players.Add(pn.Entity);
+        c.Player = pn.Entity;
 
         return pn;
     }
 
     public void RemovePlayer(string id)
     {
-        PlayerNode p = Players.GetNodeOrNull(id) as PlayerNode;
+        EntityNode p = PlayerNodes.GetNodeOrNull(id) as EntityNode;
         if (p != null)
         {
-            Main.ScriptManager.WorldPreRemovePlayer(p.Player);
-            EntityManager.Players.Remove(p.Player);
-            Players.RemoveChild(p);
+            Main.ScriptManager.WorldPreRemovePlayer(p.Entity);
+            EntityManager.Players.Remove(p.Entity);
+            PlayerNodes.RemoveChild(p);
             p.Free();
         }
     }
@@ -315,7 +315,7 @@ public class World : Node
             Snapshot sn = Snapshots[pos];
             foreach(PlayerSnap psn in sn.PlayerSnap)
             {
-                PlayerNode brp = GetNodeOrNull(psn.NodeName) as PlayerNode;
+                EntityNode brp = GetNodeOrNull(psn.NodeName) as EntityNode;
                 if (brp != null)
                 {
                     Transform t = brp.GlobalTransform;
@@ -334,7 +334,7 @@ public class World : Node
         Snapshot sn = Snapshots[Snapshots.Count - 1];
         foreach(PlayerSnap psn in sn.PlayerSnap)
         {
-            PlayerNode brp = GetNodeOrNull(psn.NodeName) as PlayerNode;
+            EntityNode brp = GetNodeOrNull(psn.NodeName) as EntityNode;
             if (brp != null)
             {
                 Transform t = brp.GlobalTransform;

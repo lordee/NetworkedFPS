@@ -6,8 +6,8 @@ using System.Collections.Generic;
 public class PlayerController : Camera
 {
     static string _playerControllerResource = "res://Scenes/PlayerController.tscn";
-    PlayerNode _playerNode;
-    public PlayerNode PlayerNode { get { return _playerNode; }}
+    EntityNode _playerNode;
+    public EntityNode PlayerNode { get { return _playerNode; }}
 
     // Player commands, stores wish commands that the player asks for (Forward, back, jump, etc)
     private float move_forward = 0;
@@ -23,7 +23,7 @@ public class PlayerController : Camera
     {
     }
 
-    public void Init(PlayerNode p)
+    public void Init(EntityNode p)
     {
         _playerNode = p;
     }
@@ -36,7 +36,7 @@ public class PlayerController : Camera
         return pc;
     }
 
-    public void Attach(PlayerNode playerNode)
+    public void Attach(EntityNode playerNode)
     {
         Node parent = this.GetParent();
         if (parent != null)
@@ -60,18 +60,17 @@ public class PlayerController : Camera
         shootTo = to + origin;
         
         PlayerCmd pCmd = new PlayerCmd();
-        pCmd.playerID = _playerNode.Player.NetworkID;
+        pCmd.playerID = _playerNode.Entity.ClientOwner.NetworkID;
         pCmd.snapshot = Main.World.LocalSnapshot;
         pCmd.move_forward = move_forward;
         pCmd.move_right = move_right;
         pCmd.move_up = move_up;
         pCmd.basis = this.GlobalTransform.basis;
         pCmd.cam_angle = _cameraAngle;
-        // FIXME - basis.z.angleto(up vector) instead of rotation value
         pCmd.attack = attack;
         pCmd.impulses = impulses;
         impulses.Clear();
-        _playerNode.Player.pCmdQueue.Add(pCmd);
+        _playerNode.Entity.pCmdQueue.Add(pCmd);
     }
 
     [InputWithArg(typeof(PlayerController), nameof(MoveForward))]

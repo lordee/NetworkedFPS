@@ -13,7 +13,7 @@ public class EntityManager : Node
     public List<Entity> SpawnedEntityQueue = new List<Entity>();
 
     // FIXME - convert to entity base?
-    public List<Player> Players = new List<Player>();
+    public List<Entity> Players = new List<Entity>();
     StringBuilder sb = new StringBuilder();
 
     public List<LuaResource> Resources = new List<LuaResource>();
@@ -36,7 +36,7 @@ public class EntityManager : Node
             en.CollisionLayer = 0;
             en.CollisionMask = 0;
             AddChild(en);
-            en.Init(item.Name);
+            en.Init(item.Name, ENTITYTYPE.GENERIC, null);
             PropertyInfo[] entFields = typeof(Entity).GetProperties();
             foreach (PropertyInfo pi in entFields)
             {
@@ -78,7 +78,7 @@ public class EntityManager : Node
     {
         PackedScene ps = Main.World.EntityManager.Resources.Find(e => e.ID == resID).PackedScene;
         EntityNode en = ps.Instance() as EntityNode;
-        en.Init(en.Name);
+        en.Init(en.Name, ENTITYTYPE.GENERIC, null);
         AddChild(en);
 
         SpawnedEntityQueue.Add(en.Entity);

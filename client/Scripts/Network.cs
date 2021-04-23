@@ -97,13 +97,13 @@ public class Network : Node
     {
         Client c = new Client(id);
         Clients.Add(c);
-        PlayerNode p = Main.World.AddPlayer(c);
+        EntityNode p = Main.World.AddPlayer(c);
 
         if(GetTree().GetNetworkUniqueId() == c.NetworkID)
         {
             Main.Client = c;
             Main.PlayerController.Attach(p);
-            UIManager.LoadHUD(p.Player);
+            UIManager.LoadHUD();
         }
     }
 
@@ -112,7 +112,7 @@ public class Network : Node
     {
         Main.World.ChangeMap(mapName);
         PlayerController pc = Main.PlayerController;
-        PlayerNode p = Main.Client.Player.PlayerNode;
+        EntityNode p = Main.Client.Player.EntityNode;
         pc.Attach(p);
     }
 

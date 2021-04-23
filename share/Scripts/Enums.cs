@@ -7,6 +7,13 @@ public enum MOVETYPE : UInt16
     FLY = 3,
 }
 
+public enum ENTITYTYPE : byte
+{
+    NONE,
+    PLAYER,
+    GENERIC
+}
+
 public enum PACKET : byte // entity type
 {
     NONE,
@@ -52,7 +59,7 @@ public enum RESOURCE
     MAP
 }
 
-public enum PSTATE
+public enum STATE
 {
     DEAD,
     ALIVE,

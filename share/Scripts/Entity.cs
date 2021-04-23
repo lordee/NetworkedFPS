@@ -11,8 +11,6 @@ public class Entity
     [MoonSharpHidden]
     public EntityNode EntityNode;
 
-    
-
     // default fields that engine needs, modified by options etc
 
     [MoonSharpHidden]
@@ -37,11 +35,33 @@ public class Entity
             }
         }
     }
+    public Client ClientOwner;
+    public bool OnLadder = false;
+    public bool WishJump = false;
+    public List<PlayerCmd> pCmdQueue = new List<PlayerCmd>();
+    public STATE STATE;
+    public float TimeDead = 0;
+    // for lua state checks
+    public int Attack = 0;
+    private float _moveScale = 1f;
+    private float _airAcceleration = 2.0f;          // Air accel
+    private float _airDecceleration = 2.0f;         // Deacceleration experienced when opposite strafing
+    private float _sideStrafeAcceleration = 50.0f;  // How fast acceleration occurs to get up to sideStrafeSpeed
+    private float _sideStrafeSpeed = 3.0f;          // What the max speed to generate when side strafing
+    private float _jumpSpeed = 27.0f;                // The speed at which the character's up axis gains when hitting jump
+    private float _maxStairAngle = 20f;
+    private float _stairJumpHeight = 9F;
+    public State ServerState;
+    public State PredictedState;
     
     public string NetName { get; set; }
     public string ClassName { get; set; }
     public MoonSharp.Interpreter.Table Fields;
 
+    public float CurrentHealth = 100;
+    public float CurrentArmour = 0;
+
+    public ENTITYTYPE EntityType = ENTITYTYPE.NONE;
     public MOVETYPE MoveType = MOVETYPE.NONE;
 
     public float MoveSpeed;
@@ -52,12 +72,11 @@ public class Entity
         set 
         {            
             _velocity = value;
-            if (Main.Network.IsNetworkMaster() && this is Player p)
+            if (Main.Network.IsNetworkMaster() && EntityType == ENTITYTYPE.PLAYER)
             {
-                // FIXME - change player to entity...
-                p.SetServerState(p.PlayerNode.GlobalTransform.origin
-                , value, p.ServerState.Rotation
-                , p.CurrentHealth, p.CurrentArmour);
+                SetServerState(EntityNode.GlobalTransform.origin
+                , value, ServerState.Rotation
+                , CurrentHealth, CurrentArmour);
             }
         }
     }
@@ -110,6 +129,13 @@ public class Entity
             Transform t = EntityNode.GlobalTransform;
             t.origin = value;
             EntityNode.GlobalTransform = t;
+
+            if (Main.Network.IsNetworkMaster() && EntityType == ENTITYTYPE.PLAYER)
+            {
+                SetServerState(EntityNode.GlobalTransform.origin
+                , ServerState.Velocity, ServerState.Rotation
+                , CurrentHealth, CurrentArmour);
+            }
         }
     }
     public bool TouchingGround = false;
@@ -137,15 +163,323 @@ public class Entity
 
     // FIXME - testing, incorporate in to fields later
     public Dictionary<string, string> MapFields = new Dictionary<string, string>();
-
     static public List<string> MapCustomFieldDefs = new List<string>();
     static public MoonSharp.Interpreter.Table Fields2;
+
     public Entity()
     {
         if (Main.Network.IsNetworkMaster())
         {
             Fields = Fields2;
             EntityID = Main.World.EntityManager.GetEntityID();
+        }
+    }
+
+    [MoonSharpHidden]
+    public void InitPlayer(Client client)
+    {
+        
+        NetName = client.NetworkID.ToString();
+        EntityType = ENTITYTYPE.PLAYER;
+
+        ClientOwner = client;
+        ClassName = "player";
+        MoveType = MOVETYPE.STEP;
+        MoveSpeed = 32;
+    }
+
+    private void Accelerate(Vector3 wishdir, float wishspeed, float accel, float delta)
+    {       
+        float currentspeed = Velocity.Dot(wishdir);
+        float addspeed = wishspeed - currentspeed;
+        if(addspeed <= 0)
+            return;
+        float accelspeed = accel * delta * wishspeed;
+        //if(accelspeed > addspeed)
+         //   accelspeed = addspeed;
+        Vector3 vel = Velocity;
+        vel.x += accelspeed * wishdir.x;
+        vel.z += accelspeed * wishdir.z;
+        Velocity = vel;
+    }
+
+        /*
+    ============
+    CmdScale
+    Returns the scale factor to apply to cmd movements
+    This allows the clients to use axial -127 to 127 values for all directions
+    without getting a sqrt(2) distortion in speed.
+    ============
+    */
+    
+     private float CmdScale(PlayerCmd pCmd)
+    {
+        int max = (int)Mathf.Abs(pCmd.move_forward);
+        if(Mathf.Abs(pCmd.move_right) > max)
+            max = (int)Mathf.Abs(pCmd.move_right);
+        if(max <= 0)
+            return 0;
+
+        float total = Mathf.Sqrt(pCmd.move_forward * pCmd.move_forward + pCmd.move_right * pCmd.move_right);
+        float scale = MoveSpeed * max / (_moveScale * total);
+
+        return scale;
+    }
+
+    public void SetServerState(Vector3 org, Vector3 velo, Vector3 rot, float health, float armour)
+    {
+        ServerState.Origin = org;
+        ServerState.Velocity = velo;
+        ServerState.Rotation = rot;
+        CurrentHealth = health;
+        CurrentArmour = armour;
+    }
+
+    public void Frame(float delta)
+    {
+        Main.ScriptManager.PlayerPreFrame(this);
+
+        PredictedState = ServerState;
+        if (pCmdQueue.Count == 0)
+        {
+            pCmdQueue.Add(
+                new PlayerCmd{
+                    snapshot = 0,
+                    playerID = ClientOwner.NetworkID,
+                    move_forward = 0,
+                    move_right = 0,
+                    move_up = 0,
+                    basis = this.GlobalTransform.basis,
+                    cam_angle = 0,
+                    attack = 0
+                    }
+                );
+        }
+        else
+        {
+            pCmdQueue.Sort((x,y) => x.snapshot.CompareTo(y.snapshot));
+        }
+
+        Transform t = EntityNode.GlobalTransform;
+        t.origin = PredictedState.Origin; // by this point it's a new serverstate
+        EntityNode.GlobalTransform = t;
+
+        foreach(PlayerCmd pCmd in pCmdQueue)
+        {
+            if (pCmd.snapshot <= ClientOwner.LastSnapshot)
+            {
+                continue;
+            }
+            if (ClientOwner != null && ClientOwner.NetworkID != Main.Network.GetTree().GetNetworkUniqueId())
+            {
+                Transform t2 = EntityNode.GlobalTransform;
+                t2.basis = pCmd.basis;
+                EntityNode.GlobalTransform = t2;
+            }
+            
+            ClientOwner.LastSnapshot = pCmd.snapshot;
+            this.Attack = pCmd.attack;
+
+            switch (STATE)
+            {
+                case STATE.DEAD:
+                    DeadProcess(pCmd, delta);
+                    break;
+                default:
+                    DefaultProcess(pCmd, delta);
+                    break;
+            }
+        }      
+
+        Main.World.MoveEntity(EntityNode, delta);
+        
+        if (Main.Network.IsNetworkMaster())
+        {
+            SetServerState(EntityNode.GlobalTransform.origin, Velocity, EntityNode.Rotation, CurrentHealth, CurrentArmour);
+        }
+        else
+        {
+            Main.Network.SendPMovement(1, ClientOwner.NetworkID, pCmdQueue);
+        }
+        
+        TrimCmdQueue();
+        
+        Main.ScriptManager.PlayerPostFrame(this);
+    }
+
+    public void TrimCmdQueue()
+    {
+        if (pCmdQueue.Count > 0)
+        {
+            int count = (Main.World.ServerSnapshot > Main.World.LocalSnapshot) ? pCmdQueue.Count - 1 : pCmdQueue.Count - (Main.World.LocalSnapshot - Main.World.ServerSnapshot);
+             
+            for (int i = 0; i < count; i++)
+            {
+                pCmdQueue.RemoveAt(0);
+            }
+        }
+    }
+
+    private void DefaultProcess(PlayerCmd pCmd, float delta)
+    {
+        if (Main.Network.IsNetworkMaster())
+        {
+            int diff = Main.World.LocalSnapshot - pCmd.snapshot;
+            if (diff < 0)
+            {
+                return;
+            }
+            Main.World.RewindPlayers(diff, delta);
+        }
+
+        Main.World.FastForwardPlayers();
+        
+        if (MoveType == MOVETYPE.STEP)
+        {
+            this.ProcessMovementCmd(PredictedState, pCmd, delta);
+        }
+    }
+
+    private void ProcessMovementCmd(State predState, PlayerCmd pCmd, float delta)
+    {
+        Velocity = predState.Velocity;
+
+        // queue jump
+        if (pCmd.move_up == 1 && !WishJump)
+        {
+            WishJump = true;
+        }
+        if (pCmd.move_up <= 0)
+        {
+            WishJump = false;
+        }
+
+        if (TouchingGround || OnLadder)
+        {
+            GroundMove(delta, pCmd);
+        }
+        else
+        {
+            AirMove(delta, pCmd);
+        }
+    }
+
+    private void GroundMove(float delta, PlayerCmd pCmd)
+    {
+        Vector3 wishDir = new Vector3();
+
+        float scale = CmdScale(pCmd);
+
+        // FIXME - this should depend on movetype, but let's try a fix for moving downwards in to ground etc
+        Vector3 bz = pCmd.basis.z;
+        bz.y = 0;
+        Vector3 bx = pCmd.basis.x;
+        bx.y = 0;
+
+        wishDir += bx * pCmd.move_right;
+        
+        wishDir -= bz * pCmd.move_forward;
+        wishDir = wishDir.Normalized();
+        Vector3 moveDirectionNorm = wishDir;
+
+        float wishSpeed = wishDir.Length();
+        wishSpeed *= MoveSpeed;
+        Accelerate(wishDir, wishSpeed, Deceleration, delta);
+
+        Vector3 vel = Velocity;
+        if (OnLadder)
+        {
+            
+            if (pCmd.move_forward != 0f)
+            {
+                vel.y = MoveSpeed * (pCmd.cam_angle / 90) * pCmd.move_forward;
+            }
+            else
+            {
+                vel.y = 0;
+            }
+            if (pCmd.move_right == 0f)
+            {
+                vel.x = 0;
+                vel.z = 0;
+            }
+        }
+
+        // walk up stairs
+        if (wishSpeed > 0 && EntityNode.StairCatcher.IsColliding())
+        {
+            Vector3 col = EntityNode.StairCatcher.GetCollisionNormal();
+            float ang = Mathf.Rad2Deg(Mathf.Acos(col.Dot(Main.World.Up)));
+            if (ang > 0 && ang < _maxStairAngle)
+            {
+                vel.y = _stairJumpHeight;
+            }
+        }
+
+        if (WishJump && EntityNode.IsOnFloor())
+        {
+            vel.y += _jumpSpeed;
+        }
+        Velocity = vel;
+    }
+
+    private void AirMove(float delta, PlayerCmd pCmd)
+    {
+        Vector3 wishdir = new Vector3();
+        
+        float wishvel = _airAcceleration;
+        float accel;
+        
+        float scale = CmdScale(pCmd);
+
+        wishdir += pCmd.basis.x * pCmd.move_right;
+        wishdir -= pCmd.basis.z * pCmd.move_forward;
+
+        float wishspeed = wishdir.Length();
+        wishspeed *= MoveSpeed;
+
+        wishdir = wishdir.Normalized();
+        Vector3 moveDirectionNorm = wishdir;
+
+        // CPM: Aircontrol
+        float wishspeed2 = wishspeed;
+        if (Velocity.Dot(wishdir) < 0)
+            accel = _airDecceleration;
+        else
+            accel = _airAcceleration;
+        // If the player is ONLY strafing left or right
+        if(pCmd.move_forward == 0 && pCmd.move_right != 0)
+        {
+            if(wishspeed > _sideStrafeSpeed)
+            {
+                wishspeed = _sideStrafeSpeed;
+            }
+                
+            accel = _sideStrafeAcceleration;
+        }
+
+        Accelerate(wishdir, wishspeed, accel, delta);
+        /*if(_airControl > 0)
+        {
+            AirControl(wishdir, wishspeed2, delta);
+        }*/
+        // !CPM: Aircontrol       
+    }
+
+    private void DeadProcess(PlayerCmd pCmd, float delta)
+    {
+        if (TouchingGround)
+        {
+            TimeDead += delta;
+        }
+
+        if (TimeDead > .5)
+        {
+            if (pCmd.attack == 1 || pCmd.move_up == 1)
+            {
+                Main.ScriptManager.PlayerSpawn(this);
+                TimeDead = 0;
+            }
         }
     }
 }

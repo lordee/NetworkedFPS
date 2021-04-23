@@ -48,12 +48,11 @@ public class ScriptManager : Node
         }  
 
         // c# types to pass
-        UserData.RegisterType<Player>();
+        UserData.RegisterType<Entity>();
         UserData.RegisterType<Godot.Vector3>();
         UserData.RegisterType<Godot.Transform>();
         UserData.RegisterType<Entity>();
         UserData.RegisterType<List<Entity>>();
-        UserData.RegisterType<List<Player>>();
 
         DynValue extensions = ScriptServer.Globals.Get("FieldExtensions");
         DynValue res = ScriptServer.Call(extensions);
@@ -84,7 +83,7 @@ public class ScriptManager : Node
         ScriptServer.Globals["Precache"] = (Action<string, RESOURCE>)Builtins.Precache;
         ScriptServer.Globals["Precache_Sound"] = (Action<string>)Builtins.Precache_Sound;
         ScriptServer.Globals["Precache_Scene"] = (Action<string>)Builtins.Precache_Scene;
-        ScriptServer.Globals["FindRadius"] = (Func<Vector3, float, List<Player>>)Builtins.FindRadius;
+        ScriptServer.Globals["FindRadius"] = (Func<Vector3, float, List<Entity>>)Builtins.FindRadius;
         ScriptServer.Globals["VLen"] = (Func<Vector3, Vector3, float>)Builtins.VLen;
     }
 
@@ -100,17 +99,17 @@ public class ScriptManager : Node
         ScriptServer.Call(luaClientDisconnected, c.Player);
     }
 
-    public void PlayerPreFrame(Player p)
+    public void PlayerPreFrame(Entity player)
     {
 
     }
 
-    public void PlayerPostFrame(Player player)
+    public void PlayerPostFrame(Entity player)
     {
         ScriptServer.Call(luaPlayerPostFrame, player);
     }
 
-    public void PlayerSpawn(Player player)
+    public void PlayerSpawn(Entity player)
     {
         ScriptServer.Call(luaPlayerSpawn, player);
     }
@@ -154,7 +153,7 @@ public class ScriptManager : Node
     }
 
     // covered on server by client disconnected
-    public void WorldPreRemovePlayer(Player player)
+    public void WorldPreRemovePlayer(Entity player)
     {
         
     }

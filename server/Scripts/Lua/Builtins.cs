@@ -81,7 +81,7 @@ static public class Builtins
         }
     }
 
-    static public List<Player> FindRadius(Vector3 org, float radius)
+    static public List<Entity> FindRadius(Vector3 org, float radius)
     {
         // FIXME - is it faster to pass entity and use sphereshape to find items?
         /*
@@ -101,7 +101,7 @@ static public class Builtins
             return state.IntersectShape(par, 100);
         */
         
-        List<Player> ents = new List<Player>();
+        List<Entity> ents = new List<Entity>();
 
         /*foreach (Entity e in Main.World.EntityManager.Entities)
         {
@@ -112,7 +112,7 @@ static public class Builtins
             }
         }*/
 
-        foreach (Player p in Main.World.EntityManager.Players)
+        foreach (Entity p in Main.World.EntityManager.Players)
         {
             float dist = (p.Origin - org).Length();
             if (dist <= radius)

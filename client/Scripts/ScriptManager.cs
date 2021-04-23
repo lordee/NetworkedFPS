@@ -12,17 +12,17 @@ public class ScriptManager : Node
         
     }
 
-    public void PlayerSpawn(Player player)
+    public void PlayerSpawn(Entity player)
     {
         
     }
 
-    public void PlayerPreFrame(Player player)
+    public void PlayerPreFrame(Entity player)
     {
         
     }
 
-    public void PlayerPostFrame(Player player)
+    public void PlayerPostFrame(Entity player)
     {
         
     }
@@ -40,17 +40,17 @@ public class ScriptManager : Node
 
     // world
 
-    public void WorldPreAddPlayer(Player player)
+    public void WorldPreAddPlayer(Entity player)
     {
 
     }
 
-    public void WorldPostAddPlayer(Player player)
+    public void WorldPostAddPlayer(Entity player)
     {
 
     }
 
-    public void WorldPreRemovePlayer(Player player)
+    public void WorldPreRemovePlayer(Entity player)
     {
         
     }

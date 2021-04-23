@@ -99,7 +99,7 @@ public class UIManager : Node
         }
     }
 
-    static public void LoadHUD(Player p)
+    static public void LoadHUD()
 	{
 		HUD.Visible = true;
 	}
