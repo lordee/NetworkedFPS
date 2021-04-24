@@ -105,10 +105,10 @@ public class Network : Node
     private byte[] BuildReliablePacket(Client client)
     {
         List<byte> packet = new List<byte>();
-        Util.AppendIntBytes(ref packet, PACKET.SNAPSHOT, Main.World.ServerSnapshot);
 
         if (client.ReliablePackets.Count > 0)
         {
+            Util.AppendIntBytes(ref packet, PACKET.SNAPSHOT, Main.World.ServerSnapshot);
             packet.AddRange(client.ReliablePackets);
             client.ReliablePackets.Clear();
         }
