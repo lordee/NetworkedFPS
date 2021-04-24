@@ -103,14 +103,14 @@ static public class Builtins
         
         List<Entity> ents = new List<Entity>();
 
-        /*foreach (Entity e in Main.World.EntityManager.Entities)
+        foreach (Entity e in Main.World.EntityManager.Entities)
         {
             float dist = (e.Origin - org).Length();
             if (dist <= radius)
             {
                 ents.Add(e);
             }
-        }*/
+        }
 
         foreach (Entity p in Main.World.EntityManager.Players)
         {
