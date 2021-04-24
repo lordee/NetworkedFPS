@@ -52,13 +52,7 @@ public class PlayerController : Camera
     }
 
     public override void _PhysicsProcess(float delta)
-    {
-        shootTo = new Vector3();
-        // FIXME - spawn projectile from middle of player, not camera?
-        Vector3 origin = ProjectRayOrigin(UIManager.HUD.AimAt.Position);
-        Vector3 to = ProjectRayNormal(UIManager.HUD.AimAt.Position) * _shootRange;
-        shootTo = to + origin;
-        
+    {       
         PlayerCmd pCmd = new PlayerCmd();
         pCmd.playerID = _playerNode.Entity.ClientOwner.NetworkID;
         pCmd.snapshot = Main.World.LocalSnapshot;
