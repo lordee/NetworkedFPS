@@ -64,14 +64,14 @@ public class EntityManager : Node
         RemoveEntityQueue.Add(entity);
     }
 
-    public Entity GetEntityByNodeName(string nodeName)
-    {
-        return Entities.Where(e => e.EntityNode.Name == nodeName).FirstOrDefault();
-    }
-
     public Entity GetEntityByID(UInt16 id)
     {
-        return Entities.Where(e => e.EntityID == id).FirstOrDefault();
+        Entity ent = Entities.Where(e => e.EntityID == id).FirstOrDefault();
+        if (ent == null)
+        {
+            ent = Players.Where(e => e.EntityID == id).FirstOrDefault();
+        }
+        return ent;
     }
 
     public Entity Spawn(UInt16 resID)
@@ -102,5 +102,25 @@ public class EntityManager : Node
     public UInt16 GetResourceID()
     {
         return (UInt16)Resources.Count;
+    }
+
+    public EntityState GenerateEntityState(Entity entity)
+    {
+        EntityState es = new EntityState();
+        es.EntityID = entity.EntityID;
+        if (entity.Owner != null)
+        {
+            es.OwnerID = entity.Owner.EntityID;
+        }
+        es.EntityType = entity.EntityType;
+        es.Velocity = entity.Velocity;
+        es.GlobalTransform = entity.GlobalTransform;
+        es.MoveType = entity.MoveType;
+        es.MoveSpeed = entity.MoveSpeed;
+        es.CollisionLayer = entity.CollisionLayer;
+        es.CollisionMask = entity.CollisionMask;
+        es.Emitting = entity.Emitting;
+        
+        return es;
     }
 }

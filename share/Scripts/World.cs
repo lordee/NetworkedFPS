@@ -25,7 +25,6 @@ public class World : Node
     private float _backRecTime = 80f;
     public float BackRecTime { get { return _backRecTime; }}
 
-    public List<Snapshot> Snapshots = new List<Snapshot>();
     public List<GameState> GameStates = new List<GameState>();
 
     
@@ -51,8 +50,11 @@ public class World : Node
             
             Main.ScriptManager.WorldStartFrame(this);
 
-            Snapshot sn = new Snapshot();
-            sn.SnapNum = Main.World.LocalSnapshot;
+            // add gamestates
+            // FIXME - server only?
+            GameState gs = new GameState();
+            gs.SnapShotNumber = Main.World.LocalSnapshot;
+            
             // players
             foreach (Client c in Main.Network.Clients)
             {
@@ -60,56 +62,25 @@ public class World : Node
                 {
                     continue;
                 }
-                Vector3 org = c.Player.ServerState.Origin;
-                Vector3 velo = c.Player.ServerState.Velocity;
-                Vector3 rot = c.Player.ServerState.Rotation;
 
-                // FIXME - change to gamestate etc
-                PlayerSnap ps = new PlayerSnap();
-                ps.Origin = org;
-                ps.Velocity = velo;
-                ps.NodeName = c.Player.EntityNode.Name;
-                ps.Rotation = rot;
-                ps.CmdQueue = c.Player.pCmdQueue;
-                sn.PlayerSnap.Add(ps);
+                EntityState es = EntityManager.GenerateEntityState(c.Player);
+                gs.EntityStates.Add(es);
 
                 Entity p = c.Player;
                 p.Frame(delta);
             }
-            Snapshots.Add(sn);
-
-            while(Snapshots.Count > Main.World.BackRecTime / delta)
-            {
-                Snapshots.RemoveAt(0);
-            }
-
-            // add gamestates
-            // FIXME - server only?
-            GameState gs = new GameState();
-            gs.SnapShotNumber = Main.World.LocalSnapshot;
 
             foreach (Entity entity in EntityManager.Entities)
             {
+                EntityState es = EntityManager.GenerateEntityState(entity);
+                gs.EntityStates.Add(es);
+
                 MoveEntity(entity.EntityNode, delta);
 
                 if (entity.NextThink != 0 && entity.NextThink <= Main.World.GameTime)
                 {
                     Main.ScriptManager.EntityThink(entity);
                 }
-
-                EntityState es = new EntityState();
-                es.EntityID = entity.EntityID;
-                if (entity.Owner != null)
-                {
-                    es.OwnerID = entity.Owner.EntityID;
-                }
-                es.GlobalTransform = entity.GlobalTransform;
-                es.MoveType = entity.MoveType;
-                es.MoveSpeed = entity.MoveSpeed;
-                es.CollisionLayer = entity.CollisionLayer;
-                es.CollisionMask = entity.CollisionMask;
-                es.Emitting = entity.Emitting;
-                gs.EntityStates.Add(es);
             }
 
             // process spawning collection
@@ -117,7 +88,7 @@ public class World : Node
             EntityManager.SpawnedEntityQueue.Clear();
 
             GameStates.Add(gs);
-            if (GameStates.Count > 32) // arbitrary
+            if (GameStates.Count > 32) // arbitrary, maybe do Main.World.BackRecTime / delta
             {
                 GameStates.RemoveAt(0);
             }
@@ -308,19 +279,22 @@ public class World : Node
     {
         bool rewound = false;
 
-        ticks = ticks > Snapshots.Count ? Snapshots.Count : ticks; // we only hold backrectime worth of ticks
+        ticks = ticks > GameStates.Count ? GameStates.Count : ticks; // FIXME - no longer true - we only hold backrectime worth of ticks
         if (ticks > 0)
         {
-            int pos = Snapshots.Count - ticks;
-            Snapshot sn = Snapshots[pos];
-            foreach(PlayerSnap psn in sn.PlayerSnap)
+            int pos = GameStates.Count - ticks;
+            GameState gs = GameStates[pos];
+            foreach (EntityState es in gs.EntityStates)
             {
-                EntityNode brp = GetNodeOrNull(psn.NodeName) as EntityNode;
-                if (brp != null)
+                if (es.EntityType == ENTITYTYPE.PLAYER)
                 {
-                    Transform t = brp.GlobalTransform;
-                    t.origin = psn.Origin;
-                    brp.GlobalTransform = t;
+                    EntityNode brp = EntityManager.GetEntityByID(es.EntityID).EntityNode;
+                    if (brp != null)
+                    {
+                        Transform t = brp.GlobalTransform;
+                        t.origin = es.GlobalTransform.origin;
+                        brp.GlobalTransform = t;
+                    }
                 }
             }
             rewound = true;
@@ -331,15 +305,19 @@ public class World : Node
 
     public void FastForwardPlayers()
     {
-        Snapshot sn = Snapshots[Snapshots.Count - 1];
-        foreach(PlayerSnap psn in sn.PlayerSnap)
+        GameState gs = GameStates[GameStates.Count-1];
+        foreach (EntityState es in gs.EntityStates)
         {
-            EntityNode brp = GetNodeOrNull(psn.NodeName) as EntityNode;
-            if (brp != null)
+            if (es.EntityType == ENTITYTYPE.PLAYER)
             {
-                Transform t = brp.GlobalTransform;
-                t.origin = psn.Origin;
-                brp.GlobalTransform = t;
+                Entity ent = EntityManager.GetEntityByID(es.EntityID);
+                EntityNode brp = ent.EntityNode;
+                if (brp != null)
+                {
+                    Transform t = brp.GlobalTransform;
+                    t.origin = es.GlobalTransform.origin;
+                    brp.GlobalTransform = t;
+                }
             }
         }
     }

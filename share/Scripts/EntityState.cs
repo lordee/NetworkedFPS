@@ -4,8 +4,9 @@ using System;
 [Serializable]
 public class EntityState
 {
-    public int EntityID = -1;
+    public ushort EntityID = 0;
     public int OwnerID = -1;
+    public ENTITYTYPE EntityType = ENTITYTYPE.NONE;
     public Transform GlobalTransform = new Transform();
     public MOVETYPE MoveType = MOVETYPE.NONE;
     public float MoveSpeed = 0;

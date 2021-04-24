@@ -39,7 +39,7 @@ public class Entity
     public bool OnLadder = false;
     public bool WishJump = false;
     public List<PlayerCmd> pCmdQueue = new List<PlayerCmd>();
-    public STATE STATE;
+    public STATE State;
     public float TimeDead = 0;
     // for lua state checks
     public int Attack = 0;
@@ -74,7 +74,7 @@ public class Entity
             _velocity = value;
             if (Main.Network.IsNetworkMaster() && EntityType == ENTITYTYPE.PLAYER)
             {
-                SetServerState(EntityNode.GlobalTransform.origin
+                SetServerState(GlobalTransform.origin
                 , value, ServerState.Rotation
                 , CurrentHealth, CurrentArmour);
             }
@@ -120,19 +120,19 @@ public class Entity
             }
         }
     }
-
+    
     public Vector3 Origin { 
         get {
-            return EntityNode.GlobalTransform.origin;
+            return GlobalTransform.origin;
         }
         set {
-            Transform t = EntityNode.GlobalTransform;
+            Transform t = GlobalTransform;
             t.origin = value;
-            EntityNode.GlobalTransform = t;
+            GlobalTransform = t;
 
             if (Main.Network.IsNetworkMaster() && EntityType == ENTITYTYPE.PLAYER)
             {
-                SetServerState(EntityNode.GlobalTransform.origin
+                SetServerState(value
                 , ServerState.Velocity, ServerState.Rotation
                 , CurrentHealth, CurrentArmour);
             }
@@ -260,9 +260,9 @@ public class Entity
             pCmdQueue.Sort((x,y) => x.snapshot.CompareTo(y.snapshot));
         }
 
-        Transform t = EntityNode.GlobalTransform;
+        Transform t = GlobalTransform;
         t.origin = PredictedState.Origin; // by this point it's a new serverstate
-        EntityNode.GlobalTransform = t;
+        GlobalTransform = t;
 
         foreach(PlayerCmd pCmd in pCmdQueue)
         {
@@ -272,15 +272,15 @@ public class Entity
             }
             if (ClientOwner != null && ClientOwner.NetworkID != Main.Network.GetTree().GetNetworkUniqueId())
             {
-                Transform t2 = EntityNode.GlobalTransform;
+                Transform t2 = GlobalTransform;
                 t2.basis = pCmd.basis;
-                EntityNode.GlobalTransform = t2;
+                GlobalTransform = t2;
             }
             
             ClientOwner.LastSnapshot = pCmd.snapshot;
             this.Attack = pCmd.attack;
 
-            switch (STATE)
+            switch (State)
             {
                 case STATE.DEAD:
                     DeadProcess(pCmd, delta);
@@ -295,7 +295,7 @@ public class Entity
         
         if (Main.Network.IsNetworkMaster())
         {
-            SetServerState(EntityNode.GlobalTransform.origin, Velocity, EntityNode.Rotation, CurrentHealth, CurrentArmour);
+            SetServerState(GlobalTransform.origin, Velocity, EntityNode.Rotation, CurrentHealth, CurrentArmour);
         }
         else
         {
@@ -322,6 +322,8 @@ public class Entity
 
     private void DefaultProcess(PlayerCmd pCmd, float delta)
     {
+
+        // FIXME - this is meant for antilag stuff...
         if (Main.Network.IsNetworkMaster())
         {
             int diff = Main.World.LocalSnapshot - pCmd.snapshot;
@@ -329,10 +331,10 @@ public class Entity
             {
                 return;
             }
-            Main.World.RewindPlayers(diff, delta);
+            //Main.World.RewindPlayers(diff, delta);
         }
 
-        Main.World.FastForwardPlayers();
+        //Main.World.FastForwardPlayers();
         
         if (MoveType == MOVETYPE.STEP)
         {

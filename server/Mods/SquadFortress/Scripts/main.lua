@@ -16,7 +16,7 @@ TEAM = {
     RED = 2,
 }
 
-PSTATE = {
+STATE = {
     DEAD = 0,
     ALIVE = 1,
 }
@@ -241,5 +241,5 @@ function PlayerSpawn (player)
 
     -- spawn found
     player.Origin = spawn.Origin;
-    player.PState = PSTATE.ALIVE;
+    player.State = STATE.ALIVE;
 end

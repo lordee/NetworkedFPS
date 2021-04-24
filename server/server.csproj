@@ -25,7 +25,6 @@
     <Compile Include="share\Scripts\World.cs" />
     <Compile Include="share\Scripts\Enums.cs" />
     <Compile Include="share\Scripts\Entity.cs" />
-    <Compile Include="share\Scripts\Snapshot.cs" />
     <Compile Include="share\Scripts\PlayerCmd.cs" />
     <Compile Include="share\Scripts\State.cs" />
     <Compile Include="share\Scripts\Util.cs" />
