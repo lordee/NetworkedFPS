@@ -112,15 +112,6 @@ static public class Builtins
             }
         }
 
-        foreach (Entity p in Main.World.EntityManager.Players)
-        {
-            float dist = (p.Origin - org).Length();
-            if (dist <= radius)
-            {
-                ents.Add(p);
-            }
-        }
-
         return ents;
     }
 

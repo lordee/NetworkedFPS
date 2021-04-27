@@ -12,8 +12,6 @@ public class EntityManager : Node
     public List<Entity> RemoveEntityQueue = new List<Entity>();
     public List<Entity> SpawnedEntityQueue = new List<Entity>();
 
-    // FIXME - convert to entity base?
-    public List<Entity> Players = new List<Entity>();
     StringBuilder sb = new StringBuilder();
 
     public List<LuaResource> Resources = new List<LuaResource>();
@@ -67,10 +65,7 @@ public class EntityManager : Node
     public Entity GetEntityByID(UInt16 id)
     {
         Entity ent = Entities.Where(e => e.EntityID == id).FirstOrDefault();
-        if (ent == null)
-        {
-            ent = Players.Where(e => e.EntityID == id).FirstOrDefault();
-        }
+
         return ent;
     }
 
@@ -120,6 +115,7 @@ public class EntityManager : Node
         es.CollisionLayer = entity.CollisionLayer;
         es.CollisionMask = entity.CollisionMask;
         es.Emitting = entity.Emitting;
+        es.ViewOffset = entity.ViewOffset;
         
         return es;
     }

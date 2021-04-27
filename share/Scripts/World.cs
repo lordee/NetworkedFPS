@@ -54,30 +54,29 @@ public class World : Node
             // FIXME - server only?
             GameState gs = new GameState();
             gs.SnapShotNumber = Main.World.LocalSnapshot;
-            
-            // players
-            foreach (Client c in Main.Network.Clients)
+
+            foreach (Entity entity in EntityManager.Entities)
             {
-                if (c.Player == null)
+                if (entity.EntityNode == null || entity.EntityNode.NativeInstance == IntPtr.Zero)
                 {
                     continue;
                 }
 
-                EntityState es = EntityManager.GenerateEntityState(c.Player);
-                gs.EntityStates.Add(es);
-
-                Entity p = c.Player;
-                p.Frame(delta);
-            }
-
-            foreach (Entity entity in EntityManager.Entities)
-            {
                 EntityState es = EntityManager.GenerateEntityState(entity);
                 gs.EntityStates.Add(es);
 
+                if (entity.EntityType == ENTITYTYPE.PLAYER)
+                {
+                    entity.Frame(delta);
+                }
+
                 MoveEntity(entity.EntityNode, delta);
 
-                if (entity.NextThink != 0 && entity.NextThink <= Main.World.GameTime)
+                if (entity.EntityType == ENTITYTYPE.PLAYER)
+                {
+                    entity.PostFrame();
+                }
+                else if (entity.NextThink != 0 && entity.NextThink <= Main.World.GameTime)
                 {
                     Main.ScriptManager.EntityThink(entity);
                 }
@@ -208,7 +207,7 @@ public class World : Node
         
         PlayerNodes.AddChild(pn);
         pn.Init(c.NetworkID.ToString(), ENTITYTYPE.PLAYER, c);
-        EntityManager.Players.Add(pn.Entity);
+        EntityManager.Entities.Add(pn.Entity);
         c.Player = pn.Entity;
 
         return pn;
@@ -220,7 +219,7 @@ public class World : Node
         if (p != null)
         {
             Main.ScriptManager.WorldPreRemovePlayer(p.Entity);
-            EntityManager.Players.Remove(p.Entity);
+            EntityManager.Entities.Remove(p.Entity);
             PlayerNodes.RemoveChild(p);
             p.Free();
         }
@@ -230,6 +229,7 @@ public class World : Node
     {
         // TODO - RemoveOldMapNode();
         EntityManager.Resources.Clear();
+        EntityManager.Entities.Clear();
         Main.ScriptManager.WorldPreLoad(this);
         StartWorld();
         foreach (Client c in Main.Network.Clients)

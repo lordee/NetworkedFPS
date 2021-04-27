@@ -14,4 +14,9 @@ public class EntityState
     public uint CollisionLayer = 1;
     public Vector3 Velocity = new Vector3();
     public bool Emitting = false;
+    public Vector3 ViewOffset = new Vector3();
+    public float Ping = 0;
+    public float CurrentHealth = 0;
+    public float CurrentArmour = 0;
+
 }

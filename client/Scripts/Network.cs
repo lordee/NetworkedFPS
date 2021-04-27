@@ -98,6 +98,7 @@ public class Network : Node
         Client c = new Client(id);
         Clients.Add(c);
         EntityNode p = Main.World.AddPlayer(c);
+        p.Entity.EntityID = (ushort)Convert.ToInt32(id);
 
         if(GetTree().GetNetworkUniqueId() == c.NetworkID)
         {
@@ -108,8 +109,9 @@ public class Network : Node
     }
 
     [Slave]
-    public void ChangeMap(string mapName)
+    public void LoadMap(string mapName)
     {
+        // load map
         Main.World.ChangeMap(mapName);
         PlayerController pc = Main.PlayerController;
         EntityNode p = Main.Client.Player.EntityNode;
@@ -142,7 +144,7 @@ public class Network : Node
         Entity ent = Main.World.EntityManager.Entities.Find(e => e.EntityID == id);
         bool process = true;
         Transform t = new Transform();
-        if (ent == null)
+        if (ent == null || ent.EntityNode.NativeInstance == IntPtr.Zero)
         {
             //FIXME - spawn not received yet, hold packet?
             process = false;
@@ -172,6 +174,15 @@ public class Network : Node
                         Entity owner = Main.World.EntityManager.Entities.Find(e2 => e2.EntityID == ownerID);
                         ent.Owner = owner;
                         break;
+                    case PACKET.PING:
+                        ent.ClientOwner.Ping = BitConverter.ToSingle(val, 0);
+                        break;
+                    case PACKET.HEALTH:
+                        ent.CurrentHealth = BitConverter.ToSingle(val, 0);
+                        break;
+                    case PACKET.ARMOUR:
+                        ent.CurrentArmour = BitConverter.ToSingle(val, 0);
+                        break;
                     case PACKET.MOVETYPE:
                         ent.MoveType = (MOVETYPE)BitConverter.ToUInt16(val, 0);
                         break;
@@ -188,13 +199,25 @@ public class Network : Node
                         ent.CollisionMask = BitConverter.ToUInt32(val, 0);
                         break;
                     case PACKET.BASISX:
-                        t.basis.x = Util.ReadV3(val);
+                        Vector3 x = Util.ReadV3(val);
+                        if (ent.ClientOwner == null || ent.ClientOwner.NetworkID != GetTree().GetNetworkUniqueId())
+                        {
+                            t.basis.x = x;
+                        }
                         break;
                     case PACKET.BASISY:
-                        t.basis.y = Util.ReadV3(val);
+                        Vector3 y = Util.ReadV3(val);
+                        if (ent.ClientOwner == null || ent.ClientOwner.NetworkID != GetTree().GetNetworkUniqueId())
+                        {
+                            t.basis.y = y;
+                        }
                         break;
                     case PACKET.BASISZ:
-                        t.basis.z = Util.ReadV3(val);
+                        Vector3 z = Util.ReadV3(val);
+                        if (ent.ClientOwner == null || ent.ClientOwner.NetworkID != GetTree().GetNetworkUniqueId())
+                        {
+                            t.basis.z = z;
+                        }
                         break;
                     case PACKET.ORIGIN:
                         t.origin = Util.ReadV3(val);
@@ -211,9 +234,14 @@ public class Network : Node
             }
             
         }
-        if (ent != null && t != ent.EntityNode.GlobalTransform)
+        if (ent != null && ent.EntityNode.NativeInstance != IntPtr.Zero && t != ent.EntityNode.GlobalTransform)
         {
             ent.EntityNode.GlobalTransform = t;
+
+            if (ent.EntityType == ENTITYTYPE.PLAYER)
+            {
+                ent.SetServerState(ent.Origin, ent.Velocity, ent.EntityNode.Rotation, ent.CurrentHealth, ent.CurrentArmour);
+            }
         }
     }
 
@@ -278,48 +306,6 @@ public class Network : Node
 
                     Main.World.EntityManager.SpawnWithID(resID, entID);
                     break;
-                case PACKET.PLAYERID:
-                    int id = BitConverter.ToInt32(val, 0);
-                    float ping = -1;
-                    float health = -1;
-                    float armour = -1;
-                    Vector3 org = new Vector3();
-                    Vector3 vel = new Vector3();
-                    Vector3 rot = new Vector3();
-                    bool playerpacket = true;
-                    while (playerpacket)
-                    {
-                        int oldi = i;
-                        val = Util.GetNextPacketBytes(packet, ref type, ref i);
-                        switch (type)
-                        {
-                            case PACKET.PING:
-                                ping = BitConverter.ToSingle(val, 0);
-                                break;
-                            case PACKET.HEALTH:
-                                health = BitConverter.ToSingle(val, 0);
-                                break;
-                            case PACKET.ARMOUR:
-                                armour = BitConverter.ToSingle(val, 0);
-                                break;
-                            case PACKET.ORIGIN:
-                                org = Util.ReadV3(val);
-                                break;
-                            case PACKET.VELOCITY:
-                                vel = Util.ReadV3(val);
-                                break;
-                            case PACKET.ROTATION:
-                                rot = Util.ReadV3(val);
-                                break;
-                            default:
-                                playerpacket = false;
-                                i = oldi;
-                                break;
-                        }
-                    }
-
-                    UpdatePlayer(id, ping, health, armour, org, vel, rot);
-                    break;
                 case PACKET.ENTITYID:
                     PacketEntity(val, packet, ref i);
                     break;
@@ -330,17 +316,6 @@ public class Network : Node
         }
 
         Main.World.LocalSnapshot = Main.World.LocalSnapshot < Main.World.ServerSnapshot ? Main.World.ServerSnapshot : Main.World.LocalSnapshot;
-    }
-
-    public void UpdatePlayer(int id, float ping, float health, float armour, Vector3 org, Vector3 velo
-        , Vector3 rot)
-    {
-        Client c = Clients.Where(p2 => p2.NetworkID == id).FirstOrDefault();
-        if (c != null)
-        {
-            c.Ping = ping;
-            c.Player.SetServerState(org, velo, rot, health, armour);
-        }
     }
 
     // STUBS

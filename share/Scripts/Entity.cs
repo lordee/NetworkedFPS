@@ -8,15 +8,10 @@ public class Entity
 {
     [MoonSharpHidden]
     public UInt16 EntityID;
-    [MoonSharpHidden]
-    public EntityNode EntityNode;
-
-    // default fields that engine needs, modified by options etc
-
-    [MoonSharpHidden]
-    public Dictionary<int, int> EntityChanges = new Dictionary<int, int>();
     
     [MoonSharpHidden]
+    public EntityNode EntityNode;
+    
     private Entity _owner;
     public Entity Owner {
         get {
@@ -35,6 +30,27 @@ public class Entity
             }
         }
     }
+
+    public Vector3 ViewOffset
+    {
+        get { 
+            if (EntityNode.Head != null)
+            {
+                return EntityNode.Head.Translation;
+            }
+            else
+            {
+                return new Vector3(0,0,0);
+            }
+            }
+        set { 
+            if (EntityNode.Head != null)
+            {
+                EntityNode.Head.Translation = value;
+            }
+        }
+    }
+
     public Client ClientOwner;
     public bool OnLadder = false;
     public bool WishJump = false;
@@ -178,9 +194,9 @@ public class Entity
     [MoonSharpHidden]
     public void InitPlayer(Client client)
     {
-        
         NetName = client.NetworkID.ToString();
         EntityType = ENTITYTYPE.PLAYER;
+        EntityID = (ushort)client.NetworkID;
 
         ClientOwner = client;
         ClassName = "player";
@@ -289,10 +305,11 @@ public class Entity
                     DefaultProcess(pCmd, delta);
                     break;
             }
-        }      
+        }
+    }
 
-        Main.World.MoveEntity(EntityNode, delta);
-        
+    public void PostFrame()
+    {
         if (Main.Network.IsNetworkMaster())
         {
             SetServerState(GlobalTransform.origin, Velocity, EntityNode.Rotation, CurrentHealth, CurrentArmour);

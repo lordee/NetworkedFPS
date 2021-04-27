@@ -56,12 +56,15 @@ public class Network : Node
         Client c = new Client(id);
         Clients.Add(c);
         // FIXME - also do this on map change to support map entities
-        SendResourceList(c);
-        
+
         Main.World.AddPlayer(c);
+
+        // tell all other clients, new client is in, spawn their client/player
         Rpc(nameof(AddPlayer), id);
-        RpcId(c.NetworkID, nameof(ChangeMap), Main.World.MapName);
-        SendResourceList(c); // FIXME - this is bad
+
+        // tell new client to load the map
+        RpcId(c.NetworkID, nameof(LoadMap), Main.World.MapName);
+        SendResourceList(c);
         Main.ScriptManager.ClientConnected(c);
     }
 
@@ -122,21 +125,6 @@ public class Network : Node
         List<byte> packet = new List<byte>();
         Util.AppendIntBytes(ref packet, PACKET.SNAPSHOT, Main.World.ServerSnapshot);
 
-        foreach (Client c in Clients)
-        {
-            if (c.Player == null)
-            {
-                continue;
-            }
-            Util.AppendIntBytes(ref packet, PACKET.PLAYERID, c.NetworkID);
-            Util.AppendFloatBytes(ref packet, PACKET.PING, c.Ping);
-            Util.AppendFloatBytes(ref packet, PACKET.HEALTH, c == client ? c.Player.CurrentHealth : 100);
-            Util.AppendFloatBytes(ref packet, PACKET.ARMOUR, c == client ? c.Player.CurrentArmour : 0);
-            Util.AppendVectorBytes(ref packet, PACKET.ORIGIN, c.Player.ServerState.Origin);
-            Util.AppendVectorBytes(ref packet, PACKET.VELOCITY, c.Player.ServerState.Velocity);
-            Util.AppendVectorBytes(ref packet, PACKET.ROTATION, c.Player.ServerState.Rotation);
-        }
-
         if (client.UnreliablePackets.Count > 0)
         {
             packet.AddRange(client.UnreliablePackets);
@@ -164,7 +152,13 @@ public class Network : Node
             {
                 ces = new EntityState();
             }
+
             Util.AppendIntBytes(ref packet, PACKET.ENTITYID, es.EntityID);
+
+            Util.DiffAndAppendBytes(ref packet, (es.Ping == ces.Ping), PACKET.PING, es.Ping);
+            // FIXME - only send clients their own correct health/armour
+            Util.DiffAndAppendBytes(ref packet, (es.CurrentHealth == ces.CurrentHealth), PACKET.HEALTH, es.CurrentHealth);
+            Util.DiffAndAppendBytes(ref packet, (es.CurrentArmour == ces.CurrentArmour), PACKET.ARMOUR, es.CurrentArmour);
             Util.DiffAndAppendBytes(ref packet, (es.OwnerID == ces.OwnerID), PACKET.OWNERID, es.OwnerID);
             Basis esb = es.GlobalTransform.basis;
             Basis cesb = ces.GlobalTransform.basis;
@@ -284,7 +278,7 @@ public class Network : Node
         // STUB for client
     }
 
-    public void ChangeMap(string mapName)
+    public void LoadMap(string mapName)
     {
         // STUB for client
     }
