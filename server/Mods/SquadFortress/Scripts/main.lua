@@ -6,6 +6,7 @@ function FieldExtensions ()
         attack_finished = 0,
         weapon = 0,
         damage = 0,
+        take_damage = 0,
     };
 
     return extensions;
@@ -42,6 +43,7 @@ ROCKET = {
     THINK = "RemoveEnt",
     NEXTTHINK = 5,
     ATTACK_FINISHED = 0.8,
+    WEAPONTYPE = WEAPON.ROCKET
 }
 
 FALSE = 0;
@@ -106,7 +108,7 @@ function FireRocket (shooter)
     ent.Think = ROCKET.THINK;
     ent.ClassName = ROCKET.CLASSNAME;
 
-    ent.Fields.weapon = WEAPON.ROCKET;
+    ent.Fields.weapon = ROCKET.WEAPONTYPE;
     ent.Fields.damage = ROCKET.DAMAGE;
 end
 
@@ -114,7 +116,11 @@ function RemoveEnt (entity)
     Remove(entity);
 end
 
-function Damage(targ, inflictor, damage)
+function Damage(targ, inflictor, damage, weaponType)
+    if (targ.Fields.take_damage == FALSE) then
+        return;
+    end
+
     local damleft = damage;
     if (targ == inflictor.Owner) then
         damleft = damleft * .5;
@@ -134,6 +140,7 @@ function Damage(targ, inflictor, damage)
     if (damleft >= healthleft) then
         targ.CurrentHealth = 0;
         Kill(targ);
+        PrintDeathMessage(targ, inflictor, weaponType)
         damleft = damleft - healthleft;
     else
         targ.CurrentHealth = healthleft - damleft;
@@ -145,6 +152,15 @@ function Damage(targ, inflictor, damage)
         dir = dir * damage / SCALINGFACTOR;
         targ.Velocity = targ.Velocity + dir;
     end
+end
+
+function PrintDeathMessage(targ, inflictor, weaponType)
+    local msg = "PrintDeathMessage not implemented";
+    if (weaponType == WEAPON.ROCKET) then
+        msg = targ.NetName .. " rides " .. inflictor.Owner.NetName .. "'s rocket";
+    end
+
+    BPrint(msg);
 end
 
 function RadiusDamage(inflictor, other)
@@ -159,7 +175,7 @@ function RadiusDamage(inflictor, other)
         if (ent != inflictor and ent != other) then
             local dist = VLen(inflictor.Origin, ent.Origin);
             local dam = inflictor.Fields.damage * ((inflictor.Fields.damage + 40 - dist) / (inflictor.Fields.damage + 40));
-            Damage(ent, inflictor, dam);
+            Damage(ent, inflictor, dam, inflictor.Fields.weapon);
         end
     end
 end
@@ -171,7 +187,7 @@ function RocketTouch (rocket, other)
     if (other != nil) then
         touched = other.NetName;
 
-        Damage(other, rocket, rocket.Fields.damage);
+        Damage(other, rocket, rocket.Fields.damage, rocket.Fields.weapon);
     end
 
     RadiusDamage(rocket, other);
@@ -192,12 +208,21 @@ function RocketTouch (rocket, other)
 end
 
 function Kill(targ)
-    
+    targ.State = STATE.DEAD;
+    targ.MoveType = MOVETYPE.NONE;
+    targ.ViewOffset = {0, 0, 0};
+    -- TODO - network viewoffset
+    -- TODO - body on ground   
 end
 
 -- FIXME - identify endless loops in lua somehow
 -- FIXME - could result in unending loop if spawn does not exist?  Might be fixed
-function PlayerSpawn (player)     
+function PlayerSpawn (player)
+    player.Fields.take_damage = TRUE;
+    player.MoveType = MOVETYPE.STEP;
+    player.State = STATE.ALIVE;
+    player.ViewOffset = {0, 1.5, 0};
+
     local team = player.Fields.team_no;
     local spawn = nil;
     

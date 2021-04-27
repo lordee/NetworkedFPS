@@ -44,8 +44,17 @@ public class ScriptManager : Node
             {
                 GD.Print(e);
             }
-            
-        }  
+        }
+
+        MoonSharp.Interpreter.Script.GlobalOptions.CustomConverters.SetScriptToClrCustomConversion(DataType.Table, typeof(Vector3),
+            dynVal => {
+                Table table = dynVal.Table;
+                float x = (float)((Double)table[1]);
+                float y = (float)((Double)table[2]);
+                float z = (float)((Double)table[3]);
+                return new Vector3(x, y, z);
+            }
+        );
 
         // c# types to pass
         UserData.RegisterType<Entity>();
