@@ -65,8 +65,8 @@ public class HUD : CanvasLayer
             pos.y = pos.y + _healthSprite.Texture.GetSize().y * _healthSprite.Scale.y / 2;
             _healthSprite.GlobalPosition = pos;
 
-            _health.Text = Mathf.CeilToInt(Main.Client.Player.CurrentHealth).ToString();
-            _armour.Text = Mathf.CeilToInt(Main.Client.Player.CurrentArmour).ToString();
+            _health.Text = Mathf.CeilToInt(Main.Client.Player.Health).ToString();
+            _armour.Text = Mathf.CeilToInt(Main.Client.Player.Armour).ToString();
             
             AimAt.GlobalPosition = size / 2;
 

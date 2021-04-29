@@ -116,6 +116,8 @@ public class EntityManager : Node
         es.CollisionMask = entity.CollisionMask;
         es.Emitting = entity.Emitting;
         es.ViewOffset = entity.ViewOffset;
+        es.Health = entity.Health;
+        es.Armour = entity.Armour;
         
         return es;
     }

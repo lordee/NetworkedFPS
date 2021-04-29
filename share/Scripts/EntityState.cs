@@ -16,6 +16,6 @@ public class EntityState
     public bool Emitting = false;
     public Vector3 ViewOffset = new Vector3();
     public float Ping = 0;
-    public float CurrentHealth = 0;
-    public float CurrentArmour = 0;
+    public float Health = 0;
+    public float Armour = 0;
 }

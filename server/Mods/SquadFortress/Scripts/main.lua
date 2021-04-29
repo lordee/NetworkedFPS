@@ -7,6 +7,8 @@ function FieldExtensions ()
         weapon = 0,
         damage = 0,
         take_damage = 0,
+        dead_time = 0,
+        state = 0,
     };
 
     return extensions;
@@ -86,7 +88,16 @@ function PlayerPostFrame (player)
 end
 
 function PlayerAttack (player)
-    if (player.Fields.attack_finished <= Time()) then
+    local t = Time();
+    if (player.Fields.attack_finished <= t) then
+        if (player.Fields.state == STATE.DEAD) then
+            if (player.Fields.dead_time <= t) then
+                player.Fields.attack_finished = t + ROCKET.ATTACK_FINISHED;
+                PlayerSpawn(player);
+            end
+            return;
+        end
+
         FireRocket(player);
     end
 end
@@ -104,7 +115,7 @@ function FireRocket (shooter)
     ent.GlobalTransform = shooter.GlobalTransform;
     ent.MoveSpeed = ROCKET.MOVESPEED;
     ent.Touch = ROCKET.TOUCH;
-    ent.NextThink = Time() + ROCKET.NEXTTHINK;
+    ent.NextThink = t + ROCKET.NEXTTHINK;
     ent.Think = ROCKET.THINK;
     ent.ClassName = ROCKET.CLASSNAME;
 
@@ -119,8 +130,6 @@ end
 function Damage(targ, inflictor, damage, weaponType)
     if (targ.Fields.take_damage == FALSE) then
         return;
-    else
-        BPrint(targ.ClassName .. " damage " .. targ.Fields.damage);
     end
 
     local damleft = damage;
@@ -128,24 +137,24 @@ function Damage(targ, inflictor, damage, weaponType)
         damleft = damleft * .5;
     end
 
-    local armleft = targ.CurrentArmour;
-    local healthleft = targ.CurrentHealth;
+    local armleft = targ.Armour;
+    local healthleft = targ.Health;
 
     if (damleft >= armleft) then
-        targ.CurrentArmour = 0;
+        targ.Armour = 0;
         damleft = damleft - armleft;
     else
-        targ.CurrentArmour = armleft - damleft;
+        targ.Armour = armleft - damleft;
         damleft = 0;
     end
 
     if (damleft >= healthleft) then
-        targ.CurrentHealth = 0;
+        targ.Health = 0;
         Kill(targ);
         PrintDeathMessage(targ, inflictor, weaponType)
         damleft = damleft - healthleft;
     else
-        targ.CurrentHealth = healthleft - damleft;
+        targ.Health = healthleft - damleft;
     end
 
     if (inflictor != nil and targ.MoveType == MOVETYPE.STEP) then
@@ -159,7 +168,11 @@ end
 function PrintDeathMessage(targ, inflictor, weaponType)
     local msg = "PrintDeathMessage not implemented";
     if (weaponType == WEAPON.ROCKET) then
-        msg = targ.NetName .. " rides " .. inflictor.Owner.NetName .. "'s rocket";
+        if (targ == inflictor.Owner) then
+            msg = targ.NetName .. " becomes bored with life";
+        else
+            msg = targ.NetName .. " rides " .. inflictor.Owner.NetName .. "'s rocket";
+        end
     end
 
     BPrint(msg);
@@ -184,7 +197,6 @@ end
 
 function RocketTouch (rocket, other)
     -- FIXME - support skies, remove if it's a sky
-
     local touched = "world";
     if (other != nil) then
         touched = other.NetName;
@@ -193,8 +205,6 @@ function RocketTouch (rocket, other)
     end
 
     RadiusDamage(rocket, other);
-
-    BPrint(rocket.Owner.NetName, "'s rocket touched ", touched, " at ", rocket.Origin);
 
     local newent = Spawn("Weapons/Explosion.tscn");
     newent.GlobalTransform = rocket.GlobalTransform;
@@ -210,24 +220,34 @@ function RocketTouch (rocket, other)
 end
 
 function Kill(targ)
-    targ.State = STATE.DEAD;
+    targ.Fields.state = STATE.DEAD;
     targ.MoveType = MOVETYPE.NONE;
     targ.ViewOffset = {0, 0, 0};
-    -- TODO - network viewoffset
+    targ.Fields.dead_time = Time() + 0.5;
+    -- FIXME - only set movetype to none after body hits ground, we want a movetype where cmds aren't processed
     -- TODO - body on ground   
+    -- TODO - death sound
 end
 
 -- FIXME - identify endless loops in lua somehow
 -- FIXME - could result in unending loop if spawn does not exist?  Might be fixed
 function PlayerSpawn (player)
+    player.Armour = 200;
+    player.Health = 100;
+    player.Fields.take_damage = TRUE;
+    player.MoveType = MOVETYPE.STEP;
+    player.Fields.state = STATE.ALIVE;
+    player.ViewOffset = {0, 1.5, 0};
+    player.Velocity = {0, 0, 0};
+
+    -- FIXME - we just assume spawn found
     local spawn = FindSpawn(player.Fields.team_no);
 
     -- spawn found
     player.Origin = spawn.Origin;
-    player.Fields.take_damage = TRUE;
-    player.MoveType = MOVETYPE.STEP;
-    player.State = STATE.ALIVE;
-    player.ViewOffset = {0, 1.5, 0};
+
+    -- TODO - spawn/tele sound
+    
 end
 
 function FindSpawn(team)

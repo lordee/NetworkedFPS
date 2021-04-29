@@ -48,7 +48,8 @@ public enum PACKET : byte // entity type
     IMPULSE,
     RESOURCEID,
     RESOURCE,
-    EMITTING
+    EMITTING,
+    VIEWOFFSET
 }
 
 public enum RESOURCE
@@ -57,12 +58,6 @@ public enum RESOURCE
     SCENE,
     SOUND,
     MAP
-}
-
-public enum STATE
-{
-    DEAD,
-    ALIVE,
 }
 
 public class ButtonInfo

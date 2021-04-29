@@ -55,7 +55,6 @@ public class Entity
     public bool OnLadder = false;
     public bool WishJump = false;
     public List<PlayerCmd> pCmdQueue = new List<PlayerCmd>();
-    public STATE State;
     public float TimeDead = 0;
     // for lua state checks
     public int Attack = 0;
@@ -74,8 +73,8 @@ public class Entity
     public string ClassName { get; set; }
     public MoonSharp.Interpreter.Table Fields;
 
-    public float CurrentHealth = 100;
-    public float CurrentArmour = 0;
+    public float Health = 100;
+    public float Armour = 0;
 
     public ENTITYTYPE EntityType = ENTITYTYPE.NONE;
     public MOVETYPE MoveType = MOVETYPE.NONE;
@@ -92,7 +91,7 @@ public class Entity
             {
                 SetServerState(GlobalTransform.origin
                 , value, ServerState.Rotation
-                , CurrentHealth, CurrentArmour);
+                , Health, Armour);
             }
         }
     }
@@ -150,7 +149,7 @@ public class Entity
             {
                 SetServerState(value
                 , ServerState.Velocity, ServerState.Rotation
-                , CurrentHealth, CurrentArmour);
+                , Health, Armour);
             }
         }
     }
@@ -246,8 +245,8 @@ public class Entity
         ServerState.Origin = org;
         ServerState.Velocity = velo;
         ServerState.Rotation = rot;
-        CurrentHealth = health;
-        CurrentArmour = armour;
+        Health = health;
+        Armour = armour;
     }
 
     public void Frame(float delta)
@@ -294,16 +293,7 @@ public class Entity
             
             ClientOwner.LastSnapshot = pCmd.snapshot;
             this.Attack = pCmd.attack;
-
-            switch (State)
-            {
-                case STATE.DEAD:
-                    DeadProcess(pCmd, delta);
-                    break;
-                default:
-                    DefaultProcess(pCmd, delta);
-                    break;
-            }
+            DefaultProcess(pCmd, delta);
         }
     }
 
@@ -311,7 +301,7 @@ public class Entity
     {
         if (Main.Network.IsNetworkMaster())
         {
-            SetServerState(GlobalTransform.origin, Velocity, EntityNode.Rotation, CurrentHealth, CurrentArmour);
+            SetServerState(GlobalTransform.origin, Velocity, EntityNode.Rotation, Health, Armour);
         }
         else
         {
@@ -482,22 +472,5 @@ public class Entity
             AirControl(wishdir, wishspeed2, delta);
         }*/
         // !CPM: Aircontrol       
-    }
-
-    private void DeadProcess(PlayerCmd pCmd, float delta)
-    {
-        if (TouchingGround)
-        {
-            TimeDead += delta;
-        }
-
-        if (TimeDead > .5)
-        {
-            if (pCmd.attack == 1 || pCmd.move_up == 1)
-            {
-                Main.ScriptManager.PlayerSpawn(this);
-                TimeDead = 0;
-            }
-        }
     }
 }

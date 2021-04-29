@@ -178,10 +178,10 @@ public class Network : Node
                         ent.ClientOwner.Ping = BitConverter.ToSingle(val, 0);
                         break;
                     case PACKET.HEALTH:
-                        ent.CurrentHealth = BitConverter.ToSingle(val, 0);
+                        ent.Health = BitConverter.ToSingle(val, 0);
                         break;
                     case PACKET.ARMOUR:
-                        ent.CurrentArmour = BitConverter.ToSingle(val, 0);
+                        ent.Armour = BitConverter.ToSingle(val, 0);
                         break;
                     case PACKET.MOVETYPE:
                         ent.MoveType = (MOVETYPE)BitConverter.ToUInt16(val, 0);
@@ -222,6 +222,9 @@ public class Network : Node
                     case PACKET.ORIGIN:
                         t.origin = Util.ReadV3(val);
                         break;
+                    case PACKET.VIEWOFFSET:
+                        ent.ViewOffset = Util.ReadV3(val);
+                        break;
                     case PACKET.EMITTING:
                         UInt16 emit = BitConverter.ToUInt16(val, 0);
                         ent.Emitting = (emit == 1 ? true : false);
@@ -240,7 +243,7 @@ public class Network : Node
 
             if (ent.EntityType == ENTITYTYPE.PLAYER)
             {
-                ent.SetServerState(ent.Origin, ent.Velocity, ent.EntityNode.Rotation, ent.CurrentHealth, ent.CurrentArmour);
+                ent.SetServerState(ent.Origin, ent.Velocity, ent.EntityNode.Rotation, ent.Health, ent.Armour);
             }
         }
     }
