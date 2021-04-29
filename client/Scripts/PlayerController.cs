@@ -15,8 +15,6 @@ public class PlayerController : Camera
     private float move_up = 0;
     private int attack = 0;
     private float _cameraAngle = 0f;
-    private Vector3 shootTo = new Vector3();
-    private float _shootRange = 100000f;
     List<float> impulses = new List<float>();
 
     public override void _Ready()
