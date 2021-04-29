@@ -1,5 +1,6 @@
 using Godot;
 using System;
+using MoonSharp.Interpreter;
 
 public class ScriptManager : Node
 {
@@ -10,6 +11,11 @@ public class ScriptManager : Node
     public override void _Ready()
     {
         
+    }
+
+    static public Table GetFieldExtensions()
+    {
+        return null;
     }
 
     public void PlayerSpawn(Entity player)

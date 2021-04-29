@@ -119,6 +119,8 @@ end
 function Damage(targ, inflictor, damage, weaponType)
     if (targ.Fields.take_damage == FALSE) then
         return;
+    else
+        BPrint(targ.ClassName .. " damage " .. targ.Fields.damage);
     end
 
     local damleft = damage;
@@ -218,14 +220,18 @@ end
 -- FIXME - identify endless loops in lua somehow
 -- FIXME - could result in unending loop if spawn does not exist?  Might be fixed
 function PlayerSpawn (player)
+    local spawn = FindSpawn(player.Fields.team_no);
+
+    -- spawn found
+    player.Origin = spawn.Origin;
     player.Fields.take_damage = TRUE;
     player.MoveType = MOVETYPE.STEP;
     player.State = STATE.ALIVE;
     player.ViewOffset = {0, 1.5, 0};
+end
 
-    local team = player.Fields.team_no;
-    local spawn = nil;
-    
+function FindSpawn(team)
+   
     if (team == TEAM.BLUE) then
         spawn = lastspawn_team1;
     else
@@ -264,7 +270,5 @@ function PlayerSpawn (player)
         return;
     end
 
-    -- spawn found
-    player.Origin = spawn.Origin;
-    player.State = STATE.ALIVE;
+    return spawn;
 end

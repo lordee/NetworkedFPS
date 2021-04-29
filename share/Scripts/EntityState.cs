@@ -18,5 +18,4 @@ public class EntityState
     public float Ping = 0;
     public float CurrentHealth = 0;
     public float CurrentArmour = 0;
-
 }

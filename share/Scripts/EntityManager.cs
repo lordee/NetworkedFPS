@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Reflection;
 using System.Linq;
 using System.Text;
+using MoonSharp.Interpreter;
 
 public class EntityManager : Node
 {
@@ -15,7 +16,6 @@ public class EntityManager : Node
     StringBuilder sb = new StringBuilder();
 
     public List<LuaResource> Resources = new List<LuaResource>();
-
 
     // Called when the node enters the scene tree for the first time.
     public override void _Ready()
@@ -44,11 +44,11 @@ public class EntityManager : Node
                     pi.SetValue(en.Entity, fields[fieldName]);
                 }
             }
-            foreach(string field in Entity.MapCustomFieldDefs)
+            foreach(var field in en.Entity.Fields.Keys)
             {
-                if (fields.Contains(field.ToLower()))
+                if (fields.Contains(field.String.ToLower()))
                 {
-                    en.Entity.MapFields.Add(field, fields[field.ToLower()].ToString());
+                    en.Entity.MapFields.Add(field.String, fields[field.String.ToLower()].ToString());
                 }
             }
             string cn = fields["classname"] != null ? (fields["classname"] as string).ToLower() : "";

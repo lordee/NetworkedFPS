@@ -258,20 +258,23 @@ public class World : Node
         LocalSnapshot = 0;
         _active = true;
 
-        Spatial entitySpawns = mapInstance.GetNode("Entity Spawns") as Spatial;
-        Godot.Collections.Array ents = entitySpawns.GetChildren();
-
-        foreach(Spatial ent in ents)
+        if (IsNetworkMaster())
         {
-            EntityManager.ProcessWorldItem(ent);
-        }
+            Spatial entitySpawns = mapInstance.GetNode("Entity Spawns") as Spatial;
+            Godot.Collections.Array ents = entitySpawns.GetChildren();
 
-        Spatial triggers = mapInstance.GetNode("Triggers") as Spatial;
-        Godot.Collections.Array triggerents = triggers.GetChildren();
+            foreach(Spatial ent in ents)
+            {
+                EntityManager.ProcessWorldItem(ent);
+            }
 
-        foreach(Spatial t in triggerents)
-        {
-            EntityManager.ProcessWorldItem(t);
+            Spatial triggers = mapInstance.GetNode("Triggers") as Spatial;
+            Godot.Collections.Array triggerents = triggers.GetChildren();
+
+            foreach(Spatial t in triggerents)
+            {
+                EntityManager.ProcessWorldItem(t);
+            }
         }
     }
 

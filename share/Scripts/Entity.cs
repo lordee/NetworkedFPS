@@ -179,14 +179,13 @@ public class Entity
 
     // FIXME - testing, incorporate in to fields later
     public Dictionary<string, string> MapFields = new Dictionary<string, string>();
-    static public List<string> MapCustomFieldDefs = new List<string>();
-    static public MoonSharp.Interpreter.Table Fields2;
 
     public Entity()
     {
         if (Main.Network.IsNetworkMaster())
         {
-            Fields = Fields2;
+            Fields = ScriptManager.GetFieldExtensions();
+
             EntityID = Main.World.EntityManager.GetEntityID();
         }
     }

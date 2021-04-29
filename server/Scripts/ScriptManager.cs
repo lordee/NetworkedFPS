@@ -13,6 +13,8 @@ public class ScriptManager : Node
     DynValue luaProcessEntity;
     DynValue luaPlayerPostFrame;
     DynValue luaWorldPostLoad;
+
+    static DynValue extensions;
     
     public override void _Ready()
     {
@@ -63,14 +65,7 @@ public class ScriptManager : Node
         UserData.RegisterType<Entity>();
         UserData.RegisterType<List<Entity>>();
 
-        DynValue extensions = ScriptServer.Globals.Get("FieldExtensions");
-        DynValue res = ScriptServer.Call(extensions);
-        MoonSharp.Interpreter.Table t = res.Table;
-        Entity.Fields2 = t;
-        foreach(var s in t.Pairs)
-        {
-            Entity.MapCustomFieldDefs.Add(s.Key.String);
-        }   
+        extensions = ScriptServer.Globals.Get("FieldExtensions");
         
         luaClientConnected = ScriptServer.Globals.Get("ClientConnected");
         luaClientDisconnected = ScriptServer.Globals.Get("ClientDisconnected");
@@ -94,6 +89,14 @@ public class ScriptManager : Node
         ScriptServer.Globals["Precache_Scene"] = (Action<string>)Builtins.Precache_Scene;
         ScriptServer.Globals["FindRadius"] = (Func<Vector3, float, List<Entity>>)Builtins.FindRadius;
         ScriptServer.Globals["VLen"] = (Func<Vector3, Vector3, float>)Builtins.VLen;
+    }
+
+    // FIXME - call this one on startup and clone it.. clone method doesn't work
+    public static Table GetFieldExtensions()
+    {
+        DynValue res = ScriptServer.Call(extensions);
+
+        return res.Table;
     }
 
     // Player
