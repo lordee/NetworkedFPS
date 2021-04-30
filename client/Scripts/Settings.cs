@@ -24,6 +24,21 @@ public class Settings
 
     private static bool _invertedMouse = true;
     public static float InvertMouseValue = -1;
+
+    [UserSetting(typeof(Settings), nameof(FPS_Max))]
+    public static int FPS_Max { 
+        get
+        {
+            return _fps_max;
+        } 
+        set
+        {
+            _fps_max = value;
+            Engine.TargetFps = value;
+        } 
+    }
+    private static int _fps_max = 165;
+
     public static string ConfigLocation = "config.cfg";
     public static bool MouseCursorVisible = true;
 

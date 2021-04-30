@@ -480,7 +480,7 @@ public class Commands
 	{
 		if(Args.Count == 0)
 		{
-			Console.Print($"Current max fps: {Engine.TargetFps}");
+			Console.Print($"Current max fps: {Settings.FPS_Max}");
 			return;
 		}
 
@@ -490,7 +490,7 @@ public class Commands
 		string TargetString = Args[0];
 
 		if(int.TryParse(TargetString, out int Target) && Target >= 10)
-			Engine.TargetFps = Target;
+			Settings.FPS_Max = Target;
 		else
 			Console.ThrowPrint($"Invalid max fps {TargetString}");
 	}
