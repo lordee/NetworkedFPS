@@ -67,7 +67,8 @@ function info_player_teamspawn (entity)
 end
 
 function WorldPostLoad ()
-    Precache_Sound("shots/rocket.wav");
+    Precache_Sound("Weapons/rocket.wav");
+    Precache_Sound("player/die.wav");
     Precache_Scene("Weapons/Rocket.tscn");
     Precache_Scene("Weapons/Explosion.tscn");
 end
@@ -106,7 +107,7 @@ function FireRocket (shooter)
     local t = Time();
     shooter.Fields.attack_finished = t + ROCKET.ATTACK_FINISHED;
     -- create entity
-    BSound(shooter.Origin, "shots/rocket.wav");
+    BSound(shooter.Origin, "Weapons/rocket.wav");
     
     -- TODO - use scenes for now? but then do we need bsound etc?
     local ent = Spawn("Weapons/Rocket.tscn");
@@ -226,7 +227,9 @@ function Kill(targ)
     targ.Fields.dead_time = Time() + 0.5;
     -- FIXME - only set movetype to none after body hits ground, we want a movetype where cmds aren't processed
     -- TODO - body on ground   
-    -- TODO - death sound
+    BSound(targ.Origin, "player/die.wav");
+
+    -- TODO - weapon model blank
 end
 
 -- FIXME - identify endless loops in lua somehow

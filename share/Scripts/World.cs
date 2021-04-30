@@ -35,6 +35,11 @@ public class World : Node
         EntityManager = GetNode("EntityManager") as EntityManager;
     }
 
+    public override void _Process(float delta)
+    {
+        
+    }
+
     public override void _PhysicsProcess(float delta)
     {
         if (_active)
