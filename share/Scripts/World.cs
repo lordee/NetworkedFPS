@@ -161,6 +161,7 @@ public class World : Node
                 KinematicCollision c = entityNode.KinematicBody.MoveAndCollide(motion);
                 if (c != null)
                 {
+                    // FIXME - currently interpolation calls this too, need to change
                     Main.ScriptManager.EntityTouch(entityNode.Entity, c);
                 }
                 break;

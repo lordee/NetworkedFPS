@@ -70,16 +70,7 @@ public class Entity
     public State PredictedState;
     
     public string NetName { get; set; }
-    private string _className;
-    public string ClassName { 
-        get {
-            return _className;
-        } 
-        set {
-            GD.Print(value);
-            _className = value;
-        } 
-    }
+    public string ClassName { get; set; }
     public MoonSharp.Interpreter.Table Fields;
 
     public float Health = 100;
@@ -535,7 +526,6 @@ public class Entity
         // !CPM: Aircontrol       
     }
 
-    int count = 0;
     public void InterpolateMesh(float delta)
     {
         if (EntityNode.MeshInstance == null)
@@ -543,52 +533,7 @@ public class Entity
             //GD.Print("returning for: ", EntityNode.Entity.ClassName);
             return;
         }
-        count++;
-        if (count % 60 == 0 && EntityNode.Entity.ClassName != "player")
-        {
-            GD.Print(this.ClassName, EntityNode.Entity.ClassName, this.EntityNode.MeshInstance.Scale, " mi: ", EntityNode.MeshInstance.GlobalTransform, " kb: ", EntityNode.KinematicBody.GlobalTransform);
-        }
-        Transform kbTransform = this.GlobalTransform;
-        Transform miTransform = this.EntityNode.MeshInstance.GlobalTransform;
 
-        if (count % 60 == 0 && EntityNode.Entity.ClassName != "player")
-        {
-            GD.Print(this.ClassName, EntityNode.Entity.ClassName, this.EntityNode.MeshInstance.Scale, " 2 mi: ", EntityNode.MeshInstance.GlobalTransform, " kb: ", EntityNode.KinematicBody.GlobalTransform);
-        }
-        return;
-        
-        // Vector3 meshOrg = meshGlobalTransform.origin;
-        // Vector3 kbOrg = EntityNode.KBCS.GlobalTransform.origin;
-
-        // // FIXME - just testing with hardcore
-        // Vector3 diff = (kbOrg - meshOrg);
-        // float length = diff.Length();
-
-        // if (diff.Length() < 1)
-        // {
-        //     t.origin = kbOrg;
-        //     EntityNode.MeshInstance.GlobalTransform = t;
-        //     return;
-        // }
-
-        // if (diff.Length() > 8)
-        // {
-        //     t.origin = kbOrg;
-        // }
-        // else
-        // {
-        //     Vector3 dir = diff.Normalized();
-
-        //     meshOrg += (dir * delta);
-        //     t.origin = meshOrg;
-        // }
-
-        // if (count % 60 == 0)
-        // {
-        //     count = 0;
-        //     GD.Print("kborg: ", kbOrg, " meshorg: ", meshOrg, " length: ", diff.Length());
-        // }
-        
-        // EntityNode.MeshInstance.GlobalTransform = t;
+        Main.World.MoveEntity(this.EntityNode, delta);
     }
 }
