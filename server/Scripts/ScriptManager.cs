@@ -89,6 +89,7 @@ public class ScriptManager : Node
         ScriptServer.Globals["Precache_Scene"] = (Action<string>)Builtins.Precache_Scene;
         ScriptServer.Globals["FindRadius"] = (Func<Vector3, float, List<Entity>>)Builtins.FindRadius;
         ScriptServer.Globals["VLen"] = (Func<Vector3, Vector3, float>)Builtins.VLen;
+        ScriptServer.Globals["DefaultSceneRotation"] = (Action<Entity>)Builtins.DefaultSceneRotation;
     }
 
     // FIXME - call this one on startup and clone it.. clone method doesn't work

@@ -9,27 +9,30 @@ height = 2.0
 
 [sub_resource type="CapsuleShape" id=2]
 
-[node name="PlayerNode" type="KinematicBody"]
-transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 8, 4 )
-collision_layer = 3
+[node name="PlayerNode" type="Node"]
 script = ExtResource( 2 )
 
-[node name="CollisionShape" type="CollisionShape" parent="."]
-transform = Transform( 1, 0, 0, 0, -1.62921e-07, -1, 0, 1, -1.62921e-07, -0.00306273, 0.00651646, -0.00455379 )
+[node name="KinematicBody" type="KinematicBody" parent="."]
+
+[node name="StairCatcher" type="RayCast" parent="KinematicBody"]
+transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.43542, -0.65487 )
+enabled = true
+
+[node name="CollisionShape" type="CollisionShape" parent="KinematicBody"]
+transform = Transform( 1, 0, 0, 0, -1.62921e-07, -1, 0, 1, -1.62921e-07, -0.00306273, 0.00651979, -0.00454998 )
 shape = SubResource( 1 )
 
-[node name="Head" type="Spatial" parent="."]
-transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.5, 0 )
-
-[node name="Feet" type="RayCast" parent="."]
-transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.843682, 0 )
+[node name="Feet" type="RayCast" parent="KinematicBody"]
+transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.84368, 0 )
 enabled = true
 
-[node name="StairCatcher" type="RayCast" parent="."]
-transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.435422, -0.65487 )
-enabled = true
+[node name="TouchArea" type="Area" parent="KinematicBody"]
 
-[node name="MeshInstance" type="MeshInstance" parent="."]
+[node name="CollisionShape" type="CollisionShape" parent="KinematicBody/TouchArea"]
+transform = Transform( 1, 0, 0, 0, -4.37114e-08, -1, 0, 1, -4.37114e-08, 0, 0, 0 )
+shape = SubResource( 2 )
+
+[node name="MeshInstance" type="MeshInstance" parent="KinematicBody"]
 transform = Transform( -1.65, 0, -6.42534e-07, 0, 1.65253, 0, 6.42534e-07, 0, -1.65, 0, -1.40749, 0 )
 mesh = ExtResource( 1 )
 material/0 = null
@@ -39,8 +42,5 @@ material/3 = null
 material/4 = null
 material/5 = null
 
-[node name="TouchArea" type="Area" parent="."]
-
-[node name="CollisionShape" type="CollisionShape" parent="TouchArea"]
-transform = Transform( 1, 0, 0, 0, -4.37114e-08, -1, 0, 1, -4.37114e-08, 0, 0, 0 )
-shape = SubResource( 2 )
+[node name="Head" type="Spatial" parent="KinematicBody/MeshInstance"]
+transform = Transform( -0.606061, 0, 2.36009e-07, 0, 0.605133, 0, -2.36009e-07, 0, -0.606061, 0, 1.75942, 0 )

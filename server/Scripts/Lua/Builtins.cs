@@ -81,6 +81,11 @@ static public class Builtins
         }
     }
 
+    static public void DefaultSceneRotation(Entity entity)
+    {
+        entity.EntityNode.DefaultSceneRotate();
+    }
+
     static public List<Entity> FindRadius(Vector3 org, float radius)
     {
         // FIXME - is it faster to pass entity and use sphereshape to find items?

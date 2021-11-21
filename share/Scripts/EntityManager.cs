@@ -31,9 +31,13 @@ public class EntityManager : Node
         if (fields != null)
         {
             EntityNode en = new EntityNode();
-            en.CollisionLayer = 0;
-            en.CollisionMask = 0;
             AddChild(en);
+            KinematicBody kb = new KinematicBody();
+            en.AddChild(kb);
+            en.KinematicBody = kb;
+            en.KinematicBody.CollisionLayer = 0;
+            en.KinematicBody.CollisionMask = 0;
+            
             en.Init(item.Name, ENTITYTYPE.GENERIC, null);
             PropertyInfo[] entFields = typeof(Entity).GetProperties();
             foreach (PropertyInfo pi in entFields)
@@ -90,7 +94,7 @@ public class EntityManager : Node
 
     public void SpawnWithID(UInt16 resID, UInt16 entID)
     {
-        Entity ent = Spawn(resID);
+        Entity ent = Spawn(resID);       
         ent.EntityID = entID;
     }
 

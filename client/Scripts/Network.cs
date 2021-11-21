@@ -151,7 +151,7 @@ public class Network : Node
         }
         else
         {
-            t = ent.EntityNode.Transform;
+            t = ent.GlobalTransform;
         }
         PACKET type = PACKET.NONE;
         
@@ -182,6 +182,9 @@ public class Network : Node
                         break;
                     case PACKET.ARMOUR:
                         ent.Armour = BitConverter.ToSingle(val, 0);
+                        break;
+                    case PACKET.ENTITYTYPE:
+                        ent.EntityType = (ENTITYTYPE)BitConverter.ToUInt16(val, 0);
                         break;
                     case PACKET.MOVETYPE:
                         ent.MoveType = (MOVETYPE)BitConverter.ToUInt16(val, 0);
@@ -237,13 +240,13 @@ public class Network : Node
             }
             
         }
-        if (ent != null && ent.EntityNode.NativeInstance != IntPtr.Zero && t != ent.EntityNode.GlobalTransform)
+        if (ent != null && ent.EntityNode.NativeInstance != IntPtr.Zero && t != ent.GlobalTransform)
         {
-            ent.EntityNode.GlobalTransform = t;
+            ent.GlobalTransform = t;
 
             if (ent.EntityType == ENTITYTYPE.PLAYER)
             {
-                ent.SetServerState(ent.Origin, ent.Velocity, ent.EntityNode.Rotation, ent.Health, ent.Armour);
+                ent.SetServerState(ent.Origin, ent.Velocity, ent.EntityNode.KinematicBody.Rotation, ent.Health, ent.Armour);
             }
         }
     }

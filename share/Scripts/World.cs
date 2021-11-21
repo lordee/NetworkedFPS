@@ -37,7 +37,13 @@ public class World : Node
 
     public override void _Process(float delta)
     {
-        
+        if (_active && !Main.Network.IsNetworkMaster())
+        {
+            foreach (Entity entity in EntityManager.Entities)
+            {
+                entity.InterpolateMesh(delta);
+            }
+        }
     }
 
     public override void _PhysicsProcess(float delta)
@@ -145,14 +151,14 @@ public class World : Node
                     }
                 }
                 
-                entityNode.Entity.Velocity = entityNode.MoveAndSlide(entityNode.Entity.Velocity, this.Up);
-                entityNode.Entity.TouchingGround = entityNode.IsOnFloor();
+                entityNode.Entity.Velocity = entityNode.KinematicBody.MoveAndSlide(entityNode.Entity.Velocity, this.Up);
+                entityNode.Entity.TouchingGround = entityNode.KinematicBody.IsOnFloor();
                 break;
             case MOVETYPE.MISSILE:
                 Vector3 motion = new Vector3();
                 entityNode.Entity.Velocity = -entityNode.Entity.GlobalTransform.basis.z.Normalized() * entityNode.Entity.MoveSpeed;
                 motion = entityNode.Entity.Velocity * delta;
-                KinematicCollision c = entityNode.MoveAndCollide(motion);
+                KinematicCollision c = entityNode.KinematicBody.MoveAndCollide(motion);
                 if (c != null)
                 {
                     Main.ScriptManager.EntityTouch(entityNode.Entity, c);
@@ -299,9 +305,9 @@ public class World : Node
                     EntityNode brp = EntityManager.GetEntityByID(es.EntityID).EntityNode;
                     if (brp != null)
                     {
-                        Transform t = brp.GlobalTransform;
+                        Transform t = brp.KinematicBody.GlobalTransform;
                         t.origin = es.GlobalTransform.origin;
-                        brp.GlobalTransform = t;
+                        brp.KinematicBody.GlobalTransform = t;
                     }
                 }
             }
@@ -322,9 +328,9 @@ public class World : Node
                 EntityNode brp = ent.EntityNode;
                 if (brp != null)
                 {
-                    Transform t = brp.GlobalTransform;
+                    Transform t = brp.KinematicBody.GlobalTransform;
                     t.origin = es.GlobalTransform.origin;
-                    brp.GlobalTransform = t;
+                    brp.KinematicBody.GlobalTransform = t;
                 }
             }
         }

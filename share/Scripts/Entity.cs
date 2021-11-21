@@ -22,10 +22,10 @@ public class Entity
             {
                 if (_owner != null)
                 {
-                    EntityNode.RemoveCollisionExceptionWith(_owner.EntityNode);
+                    EntityNode.KinematicBody.RemoveCollisionExceptionWith(_owner.EntityNode.KinematicBody);
                 }
                 
-                EntityNode.AddCollisionExceptionWith(value.EntityNode);
+                EntityNode.KinematicBody.AddCollisionExceptionWith(value.EntityNode.KinematicBody);
                 _owner = value;
             }
         }
@@ -70,7 +70,16 @@ public class Entity
     public State PredictedState;
     
     public string NetName { get; set; }
-    public string ClassName { get; set; }
+    private string _className;
+    public string ClassName { 
+        get {
+            return _className;
+        } 
+        set {
+            GD.Print(value);
+            _className = value;
+        } 
+    }
     public MoonSharp.Interpreter.Table Fields;
 
     public float Health = 100;
@@ -107,31 +116,73 @@ public class Entity
     }
 
     public uint CollisionLayer {
-        get { return EntityNode.CollisionLayer; }
-        set { 
-            if (EntityNode.CollisionLayer != value)
+        get { 
+            if (EntityType == ENTITYTYPE.PARTICLES)
             {
-                EntityNode.CollisionLayer = value;
+                return 0;
+            }
+            return EntityNode.KinematicBody.CollisionLayer; 
+        }
+        set {
+            if (EntityType == ENTITYTYPE.PARTICLES)
+            {
+                return;
+            }
+            if (EntityNode.KinematicBody.CollisionLayer != value)
+            {
+                EntityNode.KinematicBody.CollisionLayer = value;
             }
         }
     }
 
     public uint CollisionMask {
-        get { return EntityNode.CollisionMask; }
-        set { 
-            if (EntityNode.CollisionMask != value)
+        get { 
+            if (EntityType == ENTITYTYPE.PARTICLES)
             {
-                EntityNode.CollisionMask = value;
+                return 0;
+            }
+            return EntityNode.KinematicBody.CollisionMask; 
+        }
+        set { 
+            if (EntityType == ENTITYTYPE.PARTICLES)
+            {
+                return;
+            }
+            if (EntityNode.KinematicBody.CollisionMask != value)
+            {
+                EntityNode.KinematicBody.CollisionMask = value;
             } 
         }
     }
 
     public Transform GlobalTransform {
-        get { return EntityNode.GlobalTransform; }
-        set { 
-            if (EntityNode.GlobalTransform != value)
+        get {
+            if (this.EntityType == ENTITYTYPE.PARTICLES)
             {
-                EntityNode.GlobalTransform = value;
+                return EntityNode.Particles.GlobalTransform;
+            }
+            else
+            {
+                if (EntityNode.KinematicBody != null)
+                {
+                    return EntityNode.KinematicBody.GlobalTransform;
+                }
+                return new Transform();
+            }
+        }
+        set {
+            Transform transform = this.GlobalTransform;
+
+            if (transform != value)
+            {
+                if (EntityNode.Entity.EntityType == ENTITYTYPE.PARTICLES)
+                {
+                    EntityNode.Particles.GlobalTransform = value;
+                }
+                else
+                {
+                    EntityNode.KinematicBody.GlobalTransform = value;
+                }
             }
         }
     }
@@ -202,19 +253,25 @@ public class Entity
         MoveSpeed = 32;
     }
 
-    private void Accelerate(Vector3 wishdir, float wishspeed, float accel, float delta)
-    {       
+    private bool CanAccelerate(Vector3 wishdir, float wishspeed)
+    {
         float currentspeed = Velocity.Dot(wishdir);
         float addspeed = wishspeed - currentspeed;
         if(addspeed <= 0)
-            return;
+            return false;
+
+        return true;
+    }
+
+    private Vector3 Accelerate(Vector3 wishdir, float wishspeed, float accel, float delta)
+    {       
         float accelspeed = accel * delta * wishspeed;
         //if(accelspeed > addspeed)
          //   accelspeed = addspeed;
         Vector3 vel = Velocity;
         vel.x += accelspeed * wishdir.x;
         vel.z += accelspeed * wishdir.z;
-        Velocity = vel;
+        return vel;
     }
 
         /*
@@ -301,7 +358,7 @@ public class Entity
     {
         if (Main.Network.IsNetworkMaster())
         {
-            SetServerState(GlobalTransform.origin, Velocity, EntityNode.Rotation, Health, Armour);
+            SetServerState(GlobalTransform.origin, Velocity, EntityNode.KinematicBody.Rotation, Health, Armour);
         }
         else
         {
@@ -330,15 +387,15 @@ public class Entity
     {
 
         // FIXME - this is meant for antilag stuff...
-        if (Main.Network.IsNetworkMaster())
-        {
-            int diff = Main.World.LocalSnapshot - pCmd.snapshot;
-            if (diff < 0)
-            {
-                return;
-            }
-            //Main.World.RewindPlayers(diff, delta);
-        }
+        // if (Main.Network.IsNetworkMaster())
+        // {
+        //     int diff = Main.World.LocalSnapshot - pCmd.snapshot;
+        //     if (diff < 0)
+        //     {
+        //         return;
+        //     }
+        //     //Main.World.RewindPlayers(diff, delta);
+        // }
 
         //Main.World.FastForwardPlayers();
         
@@ -378,7 +435,6 @@ public class Entity
 
         float scale = CmdScale(pCmd);
 
-        // FIXME - this should depend on movetype, but let's try a fix for moving downwards in to ground etc
         Vector3 bz = pCmd.basis.z;
         bz.y = 0;
         Vector3 bx = pCmd.basis.x;
@@ -392,12 +448,14 @@ public class Entity
 
         float wishSpeed = wishDir.Length();
         wishSpeed *= MoveSpeed;
-        Accelerate(wishDir, wishSpeed, Deceleration, delta);
+        if (CanAccelerate(wishDir, wishSpeed))
+        {
+            Velocity = Accelerate(wishDir, wishSpeed, Deceleration, delta);
+        }
 
         Vector3 vel = Velocity;
         if (OnLadder)
         {
-            
             if (pCmd.move_forward != 0f)
             {
                 vel.y = MoveSpeed * (pCmd.cam_angle / 90) * pCmd.move_forward;
@@ -424,7 +482,7 @@ public class Entity
             }
         }
 
-        if (WishJump && EntityNode.IsOnFloor())
+        if (WishJump && EntityNode.KinematicBody.IsOnFloor())
         {
             vel.y += _jumpSpeed;
         }
@@ -466,11 +524,71 @@ public class Entity
             accel = _sideStrafeAcceleration;
         }
 
-        Accelerate(wishdir, wishspeed, accel, delta);
+        if (CanAccelerate(wishdir, wishspeed))
+        {
+            Velocity = Accelerate(wishdir, wishspeed, Deceleration, delta);
+        }
         /*if(_airControl > 0)
         {
             AirControl(wishdir, wishspeed2, delta);
         }*/
         // !CPM: Aircontrol       
+    }
+
+    int count = 0;
+    public void InterpolateMesh(float delta)
+    {
+        if (EntityNode.MeshInstance == null)
+        {
+            //GD.Print("returning for: ", EntityNode.Entity.ClassName);
+            return;
+        }
+        count++;
+        if (count % 60 == 0 && EntityNode.Entity.ClassName != "player")
+        {
+            GD.Print(this.ClassName, EntityNode.Entity.ClassName, this.EntityNode.MeshInstance.Scale, " mi: ", EntityNode.MeshInstance.GlobalTransform, " kb: ", EntityNode.KinematicBody.GlobalTransform);
+        }
+        Transform kbTransform = this.GlobalTransform;
+        Transform miTransform = this.EntityNode.MeshInstance.GlobalTransform;
+
+        if (count % 60 == 0 && EntityNode.Entity.ClassName != "player")
+        {
+            GD.Print(this.ClassName, EntityNode.Entity.ClassName, this.EntityNode.MeshInstance.Scale, " 2 mi: ", EntityNode.MeshInstance.GlobalTransform, " kb: ", EntityNode.KinematicBody.GlobalTransform);
+        }
+        return;
+        
+        // Vector3 meshOrg = meshGlobalTransform.origin;
+        // Vector3 kbOrg = EntityNode.KBCS.GlobalTransform.origin;
+
+        // // FIXME - just testing with hardcore
+        // Vector3 diff = (kbOrg - meshOrg);
+        // float length = diff.Length();
+
+        // if (diff.Length() < 1)
+        // {
+        //     t.origin = kbOrg;
+        //     EntityNode.MeshInstance.GlobalTransform = t;
+        //     return;
+        // }
+
+        // if (diff.Length() > 8)
+        // {
+        //     t.origin = kbOrg;
+        // }
+        // else
+        // {
+        //     Vector3 dir = diff.Normalized();
+
+        //     meshOrg += (dir * delta);
+        //     t.origin = meshOrg;
+        // }
+
+        // if (count % 60 == 0)
+        // {
+        //     count = 0;
+        //     GD.Print("kborg: ", kbOrg, " meshorg: ", meshOrg, " length: ", diff.Length());
+        // }
+        
+        // EntityNode.MeshInstance.GlobalTransform = t;
     }
 }

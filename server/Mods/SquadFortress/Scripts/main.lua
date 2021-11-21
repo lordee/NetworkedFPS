@@ -19,6 +19,13 @@ TEAM = {
     RED = 2,
 }
 
+ENTITYTYPE = {
+    NONE = 0,
+    PLAYER = 1,
+    GENERIC = 2,
+    PARTICLES = 3,
+}
+
 STATE = {
     DEAD = 0,
     ALIVE = 1,
@@ -114,6 +121,9 @@ function FireRocket (shooter)
     ent.Owner = shooter;
     ent.MoveType = ROCKET.MOVETYPE;
     ent.GlobalTransform = shooter.GlobalTransform;
+    BPrint("before: ", ent.GlobalTransform);
+    DefaultSceneRotation(ent);
+    BPrint("after: ", ent.GlobalTransform);
     ent.MoveSpeed = ROCKET.MOVESPEED;
     ent.Touch = ROCKET.TOUCH;
     ent.NextThink = t + ROCKET.NEXTTHINK;
@@ -208,10 +218,11 @@ function RocketTouch (rocket, other)
     RadiusDamage(rocket, other);
 
     local newent = Spawn("Weapons/Explosion.tscn");
+    newent.EntityType = ENTITYTYPE.PARTICLES;
     newent.GlobalTransform = rocket.GlobalTransform;
     -- FIXME - I think still causing issues? how do we do no collision, test by running over particles entity
-    newent.CollisionLayer = 0;
-    newent.CollisionMask = 0;
+    --newent.CollisionLayer = 0;
+    --newent.CollisionMask = 0;
     newent.Emitting = true;
 
     newent.Think = "RemoveEnt";
@@ -242,6 +253,7 @@ function PlayerSpawn (player)
     player.Fields.state = STATE.ALIVE;
     player.ViewOffset = {0, 1.5, 0};
     player.Velocity = {0, 0, 0};
+    player.Fields.team_no = TEAM.BLUE;
 
     -- FIXME - we just assume spawn found
     local spawn = FindSpawn(player.Fields.team_no);

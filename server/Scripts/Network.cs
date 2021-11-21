@@ -160,6 +160,7 @@ public class Network : Node
             Util.DiffAndAppendBytes(ref packet, (es.Health == ces.Health), PACKET.HEALTH, es.Health);
             Util.DiffAndAppendBytes(ref packet, (es.Armour == ces.Armour), PACKET.ARMOUR, es.Armour);
             Util.DiffAndAppendBytes(ref packet, (es.ViewOffset == ces.ViewOffset), PACKET.VIEWOFFSET, es.ViewOffset);
+            Util.DiffAndAppendBytes(ref packet, (es.EntityType == ces.EntityType), PACKET.ENTITYTYPE, (int)es.EntityType);
             Util.DiffAndAppendBytes(ref packet, (es.OwnerID == ces.OwnerID), PACKET.OWNERID, es.OwnerID);
             Basis esb = es.GlobalTransform.basis;
             Basis cesb = ces.GlobalTransform.basis;

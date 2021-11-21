@@ -9,9 +9,10 @@ public enum MOVETYPE : UInt16
 
 public enum ENTITYTYPE : byte
 {
-    NONE,
-    PLAYER,
-    GENERIC
+    NONE = 0,
+    PLAYER = 1,
+    GENERIC = 2,
+    PARTICLES = 3,
 }
 
 public enum PACKET : byte // entity type
@@ -49,7 +50,8 @@ public enum PACKET : byte // entity type
     RESOURCEID,
     RESOURCE,
     EMITTING,
-    VIEWOFFSET
+    VIEWOFFSET,
+    ENTITYTYPE
 }
 
 public enum RESOURCE
