@@ -59,7 +59,6 @@ FALSE = 0;
 TRUE = 1;
 SCALINGFACTOR = 2; -- random scaling factor, thought it was 10:1...
 
-
 lastspawn_team1 = nil;
 lastspawn_team2 = nil;
 
@@ -121,9 +120,7 @@ function FireRocket (shooter)
     ent.Owner = shooter;
     ent.MoveType = ROCKET.MOVETYPE;
     ent.GlobalTransform = shooter.GlobalTransform;
-    BPrint("before: ", ent.GlobalTransform);
     DefaultSceneRotation(ent);
-    BPrint("after: ", ent.GlobalTransform);
     ent.MoveSpeed = ROCKET.MOVESPEED;
     ent.Touch = ROCKET.TOUCH;
     ent.NextThink = t + ROCKET.NEXTTHINK;
@@ -219,7 +216,9 @@ function RocketTouch (rocket, other)
 
     local newent = Spawn("Weapons/Explosion.tscn");
     newent.EntityType = ENTITYTYPE.PARTICLES;
-    newent.GlobalTransform = rocket.GlobalTransform;
+    -- FIXME - rotate particles
+    newent.Origin = rocket.Origin;
+
     -- FIXME - I think still causing issues? how do we do no collision, test by running over particles entity
     --newent.CollisionLayer = 0;
     --newent.CollisionMask = 0;
