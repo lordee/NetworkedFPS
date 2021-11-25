@@ -112,6 +112,10 @@ public class Entity
             {
                 return 0;
             }
+            if (EntityNode == null || EntityNode.KinematicBody == null)
+            {
+                return 0;
+            }
             return EntityNode.KinematicBody.CollisionLayer; 
         }
         set {
@@ -178,14 +182,20 @@ public class Entity
         }
     }
     
+    public Vector3 OldOrigin;
     public Vector3 Origin { 
         get {
             return GlobalTransform.origin;
         }
         set {
             Transform t = GlobalTransform;
+
+            if (value != OldOrigin)
+                OldOrigin = value;
+
             t.origin = value;
             GlobalTransform = t;
+
 
             if (Main.Network.IsNetworkMaster() && EntityType == ENTITYTYPE.PLAYER)
             {
